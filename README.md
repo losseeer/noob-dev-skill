@@ -1,9 +1,17 @@
 # noob-dev
 
-给**用 AI agent 做项目的编程新手**用的开发陪伴 skill。两件事：
+给**用 AI agent 做项目的编程新手**用的开发陪伴 skill。三条能力：
 
-1. **一份看得见、接得上的项目状态树**（`dev-tree/TREE.md`）——每次决策都留痕，节点链到版本快照，换设备、换会话都能从原地接着干。
-2. **会讲人话的解释**——结论先行、零未定义术语、最小可运行代码，新手不会在第 3 行就卡住。
+| | 能力 | 触发 | 解决什么 |
+|---|---|---|---|
+| A | 项目开发状态树（`dev-tree/TREE.md`） | **always-on** | 每次决策留痕，节点链到版本快照，换会话能接着干 |
+| B | 大白话解释模式 | 按需 | **看不懂**——结论先行、零未定义术语、最小可运行代码 |
+| C | 行动优先模式 | 按需 | **做不到**——第一行给动作、编号步骤、每轮重述进度 |
+
+B 和 C 可以同时开：B 管措辞深度，C 管输出形状，冲突时 C 的形状优先。
+
+C 的进度行直接读状态树的真实数字（`[2/7 已完成] · 你在：A › B › C`），
+不是让模型自己估——这是它和原版 `i-have-adhd`（ayghri/i-have-adhd, MIT）最大的不同。
 
 ---
 
@@ -57,6 +65,10 @@ python ~/.workbuddy/skills/noob-dev/scripts/check_tree.py ./我的项目 --map
 # 出图（mermaid，可贴到 GitHub / 预览器）
 python ~/.workbuddy/skills/noob-dev/scripts/check_tree.py ./我的项目 --mermaid
 
+# 一行进度（行动优先模式 C 直接复制这一行）
+python ~/.workbuddy/skills/noob-dev/scripts/check_tree.py ./我的项目 --progress
+# → [3/7 已完成] · 你在：启动 › 搭骨架 › 跳转定稿 › 实现跳转
+
 # 给 CI 或脚本用
 python ~/.workbuddy/skills/noob-dev/scripts/check_tree.py ./我的项目 --json
 ```
@@ -96,7 +108,8 @@ I6 的候选与章节引用**脚本一行都没看**——PASS 不是放行条�
 |---|---|
 | `SKILL.md` | 主入口：路由、硬规则、bootstrap、决策点与完成流程、失败策略 |
 | `references/tree-protocol.md` | 状态树完整协议：书写契约、不变量推导、两种书写格式、边界记录 |
-| `references/explain-mode.md` | 大白话解释模式：四段结构、术语规则、反模式、正反示例 |
+| `references/explain-mode.md` | 能力 B 大白话解释模式：四段结构、术语规则、反模式、正反示例 |
+| `references/action-first-mode.md` | 能力 C 行动优先模式：十条输出整形规则、与状态树的三处裁决 |
 | `assets/TREE.template.md` | 状态树初始模板 |
 | `assets/version.template.md` | 版本快照模板 |
 | `scripts/check_tree.py` | 一致性校验（`--map` / `--mermaid` / `--json` / `--selftest`） |

@@ -527,10 +527,8 @@ def _section(body, name):
     return ""
 
 
-def render_map(nodes, current):
-    """当前路径面包屑（从根到当前活动节点）。"""
-    if current is None:
-        return "(无当前活动节点)"
+def _path_to(nodes, current):
+    """从根到当前活动节点的路径（按 parent_key 上溯）。"""
     by_key = {n.key: n for n in nodes}
     path = []
     n = current
@@ -538,6 +536,27 @@ def render_map(nodes, current):
         path.append(n)
         n = by_key.get(n.parent_key) if n.parent_key else None
     path.reverse()
+    return path
+
+
+def render_progress(nodes, current):
+    """能力 C（行动优先模式）进度行：一行拿走就能用，不用手工转写。
+
+    H10 要求进度数字必须来自树，不能自己估——这条命令就是那个来源。
+    """
+    total = len(nodes)
+    done = sum(1 for n in nodes if n.done)
+    if current is None:
+        return f"[{done}/{total} 已完成] · 全部完成"
+    names = " › ".join(n.title for n in _path_to(nodes, current))
+    return f"[{done}/{total} 已完成] · 你在：{names}"
+
+
+def render_map(nodes, current):
+    """当前路径面包屑（从根到当前活动节点）。"""
+    if current is None:
+        return "(无当前活动节点)"
+    path = _path_to(nodes, current)
     out = []
     for n in path:
         mark = "[x]" if n.done else "[ ]"
@@ -575,7 +594,8 @@ def evaluate(tree_path, root_dir):
     return nodes, errors, warnings, stats
 
 
-def run(tree_path, root_dir, want_map=False, want_mermaid=False, want_json=False):
+def run(tree_path, root_dir, want_map=False, want_mermaid=False, want_json=False,
+        want_progress=False):
     ev = evaluate(tree_path, root_dir)
     if ev is None:
         if not os.path.isfile(tree_path):
@@ -616,6 +636,9 @@ def run(tree_path, root_dir, want_map=False, want_mermaid=False, want_json=False
     if want_map:
         print("\n--- 当前路径 ---")
         print(render_map(nodes, current))
+    if want_progress:
+        print("\n--- 进度行（能力 C 直接复制这一行）---")
+        print(render_progress(nodes, current))
     if want_mermaid:
         print("\n--- mermaid（可视化，生成物；真源始终是 TREE.md） ---")
         print(render_mermaid(nodes))
@@ -1100,6 +1123,14 @@ def selftest():
         cur = nodes[stats["current_index"]]
         expect("第二步" in render_map(nodes, cur), "路径里应含当前节点")
         expect("flowchart TD" in render_mermaid(nodes), "mermaid 输出应含图表头")
+
+        # ---- case 8: 能力 C 的进度行
+        begin("--progress 应给出可直接复制的进度行")
+        prog = render_progress(nodes, cur)
+        expect(prog.startswith("[1/3 已完成]"), f"进度数字不对：{prog}")
+        expect("第一步 › 第二步" in prog, f"路径应为 A › B 形式，实际：{prog}")
+        expect(render_progress(nodes, None).endswith("全部完成"),
+               "终止态进度行应以「全部完成」收尾")
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 
@@ -1118,6 +1149,8 @@ def main():
     ap.add_argument("target", nargs="?", help="项目根目录 或 dev-tree/TREE.md 的路径")
     ap.add_argument("--map", action="store_true", help="打印当前路径面包屑")
     ap.add_argument("--mermaid", action="store_true", help="生成 mermaid 图")
+    ap.add_argument("--progress", action="store_true",
+                    help="输出一行进度（能力 C 用：已完成/总数 + 当前路径）")
     ap.add_argument("--json", action="store_true", help="输出 JSON")
     ap.add_argument("--selftest", action="store_true", help="校验本脚本自身")
     args = ap.parse_args()
@@ -1133,7 +1166,7 @@ def main():
     else:
         tree = args.target
         root = os.path.dirname(os.path.dirname(os.path.abspath(tree)))
-    return run(tree, root, args.map, args.mermaid, args.json)
+    return run(tree, root, args.map, args.mermaid, args.json, args.progress)
 
 
 if __name__ == "__main__":
