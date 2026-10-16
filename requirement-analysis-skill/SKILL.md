@@ -1,6 +1,6 @@
 ---
 name: requirement-analysis-skill
-description: Convert fuzzy ideas, user feedback, issues, chat logs, or code comments into reviewable, versioned, AI-readable requirement artifacts. Produces coverage matrices, requirement cards with Given/When/Then acceptance criteria, quality gate results, traceability matrices, split plans, and change diffs. Trigger on 需求分析 / 帮我分析这个需求 / 这个需求怎么写 / 需求澄清 / 需求评审 / 验收标准 / 需求变更 / 需求拆分, or before development splitting and requirement review. Do NOT use for deciding whether a requirement should be done at all — that is the scope gate owned by project-positioning-skill. Do NOT use for choosing technology, designing data models or interfaces, or building UI prototypes — that is owned by solution-design-skill. Do NOT use for explaining concepts or tracking day-to-day build progress — that is owned by dev-companion.
+description: Convert fuzzy ideas, user feedback, issues, chat logs, or code comments into reviewable, versioned, AI-readable requirement artifacts. Produces coverage matrices, requirement cards with Given/When/Then acceptance criteria, quality gate results, traceability matrices, split plans, and change diffs. Trigger on 需求分析 / 帮我分析这个需求 / 这个需求怎么写 / 需求澄清 / 需求评审 / 验收标准 / 需求变更 / 需求拆分, or before development splitting and requirement review. Do NOT use for deciding whether a requirement should be done at all — that is the scope gate owned by project-positioning-skill. Do NOT use for choosing technology, designing data models or interfaces, or building UI prototypes — that is owned by solution-design-skill. Do NOT use for explaining concepts or tracking day-to-day build progress — that is owned by dev-companion-skill.
 ---
 
 # Requirement Analysis Skill
@@ -36,7 +36,7 @@ description: Convert fuzzy ideas, user feedback, issues, chat logs, or code comm
 
 1. **纯打听类不归本 Skill，本条只作误路由兜底**：用户只是问某个概念什么意思、
    某个技术方案怎么看、或某个需求**值不值得做**，正确归属见下方裁决表
-   （依次为 `dev-companion` / `solution-design-skill` / `project-positioning-skill`）。
+   （依次为 `dev-companion-skill` / `solution-design-skill` / `project-positioning-skill`）。
    若已被路由进来 → 只回答，不写文件。
 2. 已有需求产物且用户提出修改、追加、删减时，执行**变更管理**（步骤 8）。
 3. 已有需求产物且用户要求 review 或评审时，执行**质量门禁**（步骤 6）+ review 文档。
@@ -54,7 +54,7 @@ description: Convert fuzzy ideas, user feedback, issues, chat logs, or code comm
 | 「这个需求内容该怎么写」「验收标准是什么」「帮我补全这个需求」 | **本 Skill** |
 | 「这个需求该不该做」「是不是超出范围」 | `project-positioning-skill`（这类只出范围判定结论，不走本 Skill 的覆盖矩阵） |
 | 「用什么技术实现」「数据模型怎么设计」「画个原型看看」 | `solution-design-skill` |
-| 「下一步干嘛」「术语看不懂」 | `dev-companion` |
+| 「下一步干嘛」「术语看不懂」 | `dev-companion-skill` |
 
 注意「这个需求该不该做」与「帮我分析这个需求」的区别：前者是范围判定，归定位 Skill；
 后者是需求内容分析，归本 Skill。两者只差几个字，判错会让整个流程走错方向。

@@ -1,6 +1,6 @@
 ---
 name: solution-design-skill
-description: Turn accepted requirements into a reviewable technical solution and, when there is UI, a runnable interactive prototype. Produces technology selections with traceable basis, architecture layout, data model, interface contracts, ADRs, and a review record. Trigger on 技术方案 / 怎么实现 / 技术选型 / 架构怎么设计 / 数据模型 / 接口设计 / 数据库怎么设计 / 画个原型 / 做个能点的 demo / 先看一下交互长什么样, or after requirements are settled and before implementation starts. Do NOT use for deciding whether something should be done — that is the scope gate owned by project-positioning-skill. Do NOT use for writing requirement cards, acceptance criteria, or reviewing requirement wording — that is owned by requirement-analysis-skill. Do NOT use for explaining concepts in plain language, tracking day-to-day build progress, or asking what to do next once implementation has started — those are owned by dev-companion.
+description: Turn accepted requirements into a reviewable technical solution and, when there is UI, a runnable interactive prototype. Produces technology selections with traceable basis, architecture layout, data model, interface contracts, ADRs, and a review record. Trigger on 技术方案 / 怎么实现 / 技术选型 / 架构怎么设计 / 数据模型 / 接口设计 / 数据库怎么设计 / 画个原型 / 做个能点的 demo / 先看一下交互长什么样, or after requirements are settled and before implementation starts. Do NOT use for deciding whether something should be done — that is the scope gate owned by project-positioning-skill. Do NOT use for writing requirement cards, acceptance criteria, or reviewing requirement wording — that is owned by requirement-analysis-skill. Do NOT use for explaining concepts in plain language, tracking day-to-day build progress, or asking what to do next once implementation has started — those are owned by dev-companion-skill.
 ---
 
 # Solution Design Skill
@@ -39,7 +39,7 @@ description: Turn accepted requirements into a reviewable technical solution and
 按顺序路由：
 
 1. **纯打听类不归本 Skill，本条只作误路由兜底**：用户只是问某个技术怎么选、
-   某个架构怎么看、某个概念什么意思，**没说要开工** → 归 `dev-companion` 的能力 B，
+   某个架构怎么看、某个概念什么意思，**没说要开工** → 归 `dev-companion-skill` 的能力 B，
    详见下方裁决表。若已被路由进来 → 只回答，不写文件，不启动本 Skill 的流程。
 2. 已有设计方案且用户提出修改 → 走**步骤 4-8**，并递增版本号，不覆盖历史。
 3. 已有设计方案且用户要求 review → 走**步骤 6**，出 review 记录。
@@ -56,12 +56,12 @@ description: Turn accepted requirements into a reviewable technical solution and
 | 情形 | 归属 |
 |---|---|
 | 「用 A 还是 B 实现」——技术选型本身 | **本 Skill**，产出 `stack.yaml` + ADR |
-| 「先做哪个任务」「下一步干嘛」——选型已定后的排序 | `dev-companion`（本轮还在做选型时除外） |
+| 「先做哪个任务」「下一步干嘛」——选型已定后的排序 | `dev-companion-skill`（本轮还在做选型时除外） |
 | 「做个能点的 demo」「画个原型」 | **本 Skill**，原型登记进 `current.yaml`，不是一次性产物 |
-| 写完就扔的一次性临时脚本 | `dev-companion`：仍用能力 B/C 回答，但**不建树**；它不是任何 Skill 的设计产物 |
-| 「这是什么意思」「用大白话讲讲」——只解释不落文件 | `dev-companion`（能力 B），本 Skill 不接 |
+| 写完就扔的一次性临时脚本 | `dev-companion-skill`：仍用能力 B/C 回答，但**不建树**；它不是任何 Skill 的设计产物 |
+| 「这是什么意思」「用大白话讲讲」——只解释不落文件 | `dev-companion-skill`（能力 B），本 Skill 不接 |
 | 「这个技术方案该怎么设计」——要出产物 | **本 Skill** |
-| 正在开发中且已有 `dev-tree/TREE.md` 当前活动节点，问下一步 | 让位给 `dev-companion`，本 Skill 不接 |
+| 正在开发中且已有 `dev-tree/TREE.md` 当前活动节点，问下一步 | 让位给 `dev-companion-skill`，本 Skill 不接 |
 
 ## 证据与依据
 
@@ -143,7 +143,7 @@ cd <本 skill 目录>/scripts && python validate_bundle.py
 ### 8. 交付摘要
 
 读取 `prompts/08_handoff.md`。写出 `.project/design/current.md` 与交付清单。
-**不调用 `dev-companion`**，只留文件。
+**不调用 `dev-companion-skill`**，只留文件。
 
 ## 产物约定
 

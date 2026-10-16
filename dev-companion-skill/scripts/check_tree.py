@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""dev-companion · 项目开发状态树一致性校验（stdlib only, no dependencies）
+"""dev-companion-skill · 项目开发状态树一致性校验（stdlib only, no dependencies）
 
 用法:
     python check_tree.py <project-root|TREE.md> [--map] [--mermaid] [--json]
@@ -23,10 +23,15 @@ import tempfile
 
 TREE_REL = os.path.join("dev-tree", "TREE.md")
 VER_DIR_REL = os.path.join("dev-tree", "versions")
-TABLE_MARK = "<!-- dev-companion:tree format=table -->"
-# 旧名时期写进用户项目 TREE.md 的标记。改名后继续接受，
-# 否则已有项目会静默退化成「按列表格式解析」——那是把失败藏起来了
-LEGACY_TABLE_MARK = "<!-- noob-dev:tree format=table -->"
+TABLE_MARK = "<!-- dev-companion-skill:tree format=table -->"
+# 历史标记：改名前后写进用户项目 TREE.md 的标记都必须继续识别，
+# 否则已有项目会静默退化成「按列表格式解析」——那是把失败藏起来了。
+# noob-dev 是最早的名字，dev-companion-skill 是上一次改名的结果。
+LEGACY_TABLE_MARKS = (
+    "<!-- dev-companion:tree format=table -->",
+    "<!-- noob-dev:tree format=table -->",
+)
+ALL_TABLE_MARKS = (TABLE_MARK,) + LEGACY_TABLE_MARKS
 CURRENT_RE = re.compile(r"当前活动节点[：:]")
 # 终止态：项目全部完成时没有待完成节点可指，允许写成「当前活动节点：—」或标注「全部完成」
 ALL_DONE_RE = re.compile(r"当前活动节点[：:]\s*(?:[—\-–—]|.*全部完成)")
@@ -395,7 +400,7 @@ def load_tree(tree_path):
     with open(tree_path, "r", encoding="utf-8") as f:
         content = f.read()
     lines = content.splitlines()
-    fmt = "table" if (TABLE_MARK in content or LEGACY_TABLE_MARK in content) else "list"
+    fmt = "table" if any(mark in content for mark in ALL_TABLE_MARKS) else "list"
     nodes, issues = (parse_table_format if fmt == "table" else parse_list_format)(lines)
     return content, nodes, issues
 
@@ -945,7 +950,7 @@ def selftest():
             results[-1][1] = False
             results[-1][2] = msg
 
-    tmp = tempfile.mkdtemp(prefix="dev-companion-selftest-")
+    tmp = tempfile.mkdtemp(prefix="dev-companion-skill-selftest-")
     try:
         # ---- case 1: 缺失树 -> 退出码 2
         begin("缺少 TREE.md 应返回退出码 2")
@@ -1058,6 +1063,23 @@ def selftest():
         nodes3, errors3, _, _ = evaluate(os.path.join(tbl3, TREE_REL), tbl3)
         expect(len(nodes3) == 2, f"旧标记应解析出 2 个节点，实际 {len(nodes3)}")
         expect(not errors3, f"旧标记不应报错：{[str(i) for i in errors3]}")
+
+        # ---- case 3d: 上一次改名的标记（dev-companion:tree）仍要识别
+        begin("上一版标记（dev-companion:tree）仍应识别为表格格式")
+        tbl3d = os.path.join(tmp, "table3d")
+        tbl3d_tree = (
+            "# demo · 开发状态树\n\n"
+            "> 当前活动节点：`子步` → [v002](versions/002-b.md)\n\n"
+            "<!-- dev-companion:tree format=table -->\n\n"
+            "| ID | 状态 | 节点 | 版本 |\n"
+            "|---|---|---|---|\n"
+            "| 1 | [x] | 起点 | [v001](versions/001-a.md) |\n"
+            "| 1.1 | [ ] | 子步 | [v002](versions/002-b.md) |\n"
+        )
+        _write(tbl3d, tbl3d_tree, {"001-a.md": GOOD_VERSION, "002-b.md": TODO_VERSION})
+        nodes3d, errors3d, _, _ = evaluate(os.path.join(tbl3d, TREE_REL), tbl3d)
+        expect(len(nodes3d) == 2, f"上一版标记应解析出 2 个节点，实际 {len(nodes3d)}")
+        expect(not errors3d, f"上一版标记不应报错：{[str(i) for i in errors3d]}")
 
         # ---- case 4: E9 悬空版本标签引用
         begin("引用不存在的 vNNN 应命中 E9")
@@ -1235,7 +1257,7 @@ def selftest():
 
 
 def main():
-    ap = argparse.ArgumentParser(description="校验 dev-companion 项目开发状态树")
+    ap = argparse.ArgumentParser(description="校验 dev-companion-skill 项目开发状态树")
     ap.add_argument("target", nargs="?", help="项目根目录 或 dev-tree/TREE.md 的路径")
     ap.add_argument("--map", action="store_true", help="打印当前路径面包屑")
     ap.add_argument("--mermaid", action="store_true", help="生成 mermaid 图")

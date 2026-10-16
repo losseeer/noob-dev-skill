@@ -47,4 +47,4 @@ findings:
     note: 复审条件已写进 ADR，出现账号体系时立即回改
 unresolved_assumptions: [ASM-001]
 status_after: reviewed
-summary: 方案自洽，可交给 dev-companion 拆解实施。两条 minor 已记录，其中短码可枚举需盯复审条件。
+summary: 方案自洽，可交给 dev-companion-skill 拆解实施。两条 minor 已记录，其中短码可枚举需盯复审条件。

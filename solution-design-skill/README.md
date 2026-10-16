@@ -7,7 +7,7 @@
 - 上游 `project-positioning-skill` 决定**做不做**
 - 上游 `requirement-analysis-skill` 决定**做成什么样**
 - 本 Skill 决定**怎么解**
-- 下游 `dev-companion` 负责**真的做下去并记得住**
+- 下游 `dev-companion-skill` 负责**真的做下去并记得住**
 
 四者只通过文件约定协作，不互相调用。上游产物缺失时记 `not_found`，不阻塞。
 
@@ -91,7 +91,7 @@ python scripts/validate_artifact.py interfaces .project/design/tech/interfaces.y
 |---|---|
 | 决定该不该做 | `project-positioning-skill` |
 | 写需求卡与验收标准 | `requirement-analysis-skill` |
-| 解释概念、记录开发进度 | `dev-companion` |
-| **写实现代码** | `dev-companion` |
+| 解释概念、记录开发进度 | `dev-companion-skill` |
+| **写实现代码** | `dev-companion-skill` |
 
 **不得自行放宽上游 constraints。** 约束不合理只能记 `escalated_to_positioning` 交回上游。

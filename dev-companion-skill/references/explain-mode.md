@@ -1,6 +1,6 @@
 # 大白话解释模式（Explain Mode）
 
-> 本文件是 `dev-companion` skill 的能力 B：**on demand**。
+> 本文件是 `dev-companion-skill` skill 的能力 B：**on demand**。
 > 用户一问「为什么 / 这是什么意思 / 看不懂 / 讲一下 / 用大白话」，本次会话起持续生效，直到用户说「不用解释了 / 直接给代码」。
 
 ---

@@ -1,10 +1,10 @@
 ---
-name: dev-companion
+name: dev-companion-skill
 description: "Build a software project together with a beginner developer. Three capabilities: (A) always-on development status tree at dev-tree/TREE.md; (B) on demand plain-language explanation with no undefined jargon; (C) on demand action-first output shaping. Use when the user builds with an agent and asks 解释 / 看不懂 / 什么意思 / 用大白话 / 我是新手, says 直接给我下一步 / 别废话 / 太长了 / 开 adhd 模式, or wants a resumable plan that survives across sessions. Owns plain-language explanation even when nothing is being built - answer with B, no tree. Do NOT use for deciding scope or positioning, writing requirement cards, choosing technology, or producing design artifacts and UI prototypes - those belong to project-positioning-skill, requirement-analysis-skill, and solution-design-skill respectively. A UI prototype is a reviewed deliverable registered in .project/design/current.yaml, not a disposable script - route it to solution-design-skill. For genuinely disposable one-off scripts, answer but skip the tree."
 agent_created: true
 ---
 
-# dev-companion
+# dev-companion-skill
 
 面向「用 agent 做项目的编程新手」的开发陪伴协议。
 
@@ -89,7 +89,7 @@ agent_created: true
 ## 文件布局
 
 ```
-dev-companion/                          # 本 skill
+dev-companion-skill/                          # 本 skill
 ├── SKILL.md
 ├── references/
 │   ├── tree-protocol.md           # 能力 A 的完整协议（不变量、决策点、完成协议）
@@ -115,12 +115,12 @@ dev-companion/                          # 本 skill
 因此**在用户项目根目录下执行 `scripts/check_tree.py` 是跑不通的**——你必须用下面的完整路径：
 
 ```bash
-python ~/.workbuddy/skills/dev-companion/scripts/check_tree.py <用户项目目录>
-python ~/.workbuddy/skills/dev-companion/scripts/check_tree.py --selftest   # 校验脚本自身
+python ~/.workbuddy/skills/dev-companion-skill/scripts/check_tree.py <用户项目目录>
+python ~/.workbuddy/skills/dev-companion-skill/scripts/check_tree.py --selftest   # 校验脚本自身
 ```
 
 如果本 skill 装在别处（源目录或自定义位置），把上面路径换成实际安装位置即可。
-**目录名必须和 `SKILL.md` 的 `name` 字段一致**（`dev-companion`），这是平台识别 skill 的依据。
+**目录名必须和 `SKILL.md` 的 `name` 字段一致**（`dev-companion-skill`），这是平台识别 skill 的依据。
 
 ---
 

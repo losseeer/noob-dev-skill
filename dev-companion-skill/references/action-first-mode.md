@@ -1,6 +1,6 @@
 # 行动优先模式（Action-First Mode）
 
-> 本文件是 `dev-companion` skill 的能力 C：**on demand**。
+> 本文件是 `dev-companion-skill` skill 的能力 C：**on demand**。
 > 输出整形规则脱胎于 `i-have-adhd`（ayghri/i-have-adhd，MIT），
 > 面向「读不进去、启动困难」的读者，重塑**输出的形状**。
 
@@ -36,7 +36,7 @@ i-have-adhd 的规则里有「每轮重述进度（第 3 步/共 5 步）」。
 **这一整行不要手写，跑一条命令复制出来：**
 
 ```bash
-python ~/.workbuddy/skills/dev-companion/scripts/check_tree.py <项目目录> --progress
+python ~/.workbuddy/skills/dev-companion-skill/scripts/check_tree.py <项目目录> --progress
 # → [3/7 已完成] · 你在：启动 › 搭骨架 › 跳转定稿 › 实现跳转
 ```
 

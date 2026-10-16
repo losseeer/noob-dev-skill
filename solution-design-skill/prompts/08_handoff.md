@@ -2,7 +2,7 @@
 
 ## 目的
 
-把方案整理成 `dev-companion` 能直接接着干的输入。**写文件，不调用对方 Skill。**
+把方案整理成 `dev-companion-skill` 能直接接着干的输入。**写文件，不调用对方 Skill。**
 
 ## 产出
 
@@ -29,7 +29,7 @@
 
 ## 硬性约束
 
-- **不调用 `dev-companion`**，也不在产物里写「根据 dev-companion 第 X 条」。
+- **不调用 `dev-companion-skill`**，也不在产物里写「根据 dev-companion-skill 第 X 条」。
   产物只对 abstraction（ shape）负责，与另外两个 Skill 一样遵循「只通过文件约定协作」。
 - 本 Skill 不写实现代码，也不替对方拆分任务粒度——那属于开发陪伴 Skill 的决策点处理。
 - `open_questions` 里有未答复项时，摘要里必须显式标出阻塞，不能含糊带过。

@@ -1,4 +1,4 @@
-# dev-companion
+# dev-companion-skill
 
 给**用 AI agent 做项目的编程新手**用的开发陪伴 skill。三条能力：
 
@@ -18,8 +18,8 @@ C 的进度行直接读状态树的真实数字（`[2/7 已完成] · 你在：A
 ## 安装
 
 ```bash
-cp -r <本 skill 源目录> ~/.workbuddy/skills/dev-companion
-python ~/.workbuddy/skills/dev-companion/scripts/check_tree.py --selftest
+cp -r <本 skill 源目录> ~/.workbuddy/skills/dev-companion-skill
+python ~/.workbuddy/skills/dev-companion-skill/scripts/check_tree.py --selftest
 ```
 
 自检输出形如 `selftest: N passed, 0 failed` 即安装正常（**看 `failed` 是否为 0**，不要核对 N 的具体数值——随版本会变）。零依赖（只用 Python 标准库）。
@@ -57,20 +57,20 @@ python ~/.workbuddy/skills/dev-companion/scripts/check_tree.py --selftest
 
 ```bash
 # 常规校验（每次改完树都跑）
-python ~/.workbuddy/skills/dev-companion/scripts/check_tree.py ./我的项目
+python ~/.workbuddy/skills/dev-companion-skill/scripts/check_tree.py ./我的项目
 
 # 看当前在干哪一步（路径面包屑）
-python ~/.workbuddy/skills/dev-companion/scripts/check_tree.py ./我的项目 --map
+python ~/.workbuddy/skills/dev-companion-skill/scripts/check_tree.py ./我的项目 --map
 
 # 出图（mermaid，可贴到 GitHub / 预览器）
-python ~/.workbuddy/skills/dev-companion/scripts/check_tree.py ./我的项目 --mermaid
+python ~/.workbuddy/skills/dev-companion-skill/scripts/check_tree.py ./我的项目 --mermaid
 
 # 一行进度（行动优先模式 C 直接复制这一行）
-python ~/.workbuddy/skills/dev-companion/scripts/check_tree.py ./我的项目 --progress
+python ~/.workbuddy/skills/dev-companion-skill/scripts/check_tree.py ./我的项目 --progress
 # → [3/7 已完成] · 你在：启动 › 搭骨架 › 跳转定稿 › 实现跳转
 
 # 给 CI 或脚本用
-python ~/.workbuddy/skills/dev-companion/scripts/check_tree.py ./我的项目 --json
+python ~/.workbuddy/skills/dev-companion-skill/scripts/check_tree.py ./我的项目 --json
 ```
 
 退出码：`0` 通过 / `1` 有错 / `2` 找不到树或有节点解析不出来。

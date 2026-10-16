@@ -30,7 +30,7 @@
 
 ## 硬性约束
 
-- 本 Skill 到此为止，**不写实现代码**。动手写代码由 `dev-companion` 承接。
+- 本 Skill 到此为止，**不写实现代码**。动手写代码由 `dev-companion-skill` 承接。
 - 数据与接口的字段命名要统一；同一个概念跨两份文件出现，必须同名。
 - 本步骤结束后，`current.yaml` 的 `coverage` 里应当不再有 `status: gap`，
   除非明确标了 `skipped` 并在 `note` 里引用上游 `out_of_scope`。

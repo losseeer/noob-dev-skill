@@ -1,6 +1,6 @@
 # 项目开发状态树协议（Development Tree Protocol）
 
-> 本文件是 `dev-companion` skill 的能力 A：**always-on**，只要在开发就必须维护。
+> 本文件是 `dev-companion-skill` skill 的能力 A：**always-on**，只要在开发就必须维护。
 > 它是一个 decision tree（决策树）：记录「我们在这步定了什么 → 接下来做什么」。
 > 它不是 WBS（work breakdown structure，工作分解结构）：父子不是「整体包含部分」，而是「上一步的决策长出下一步」。
 
@@ -19,7 +19,7 @@
 ```
 
 - **单一真源 = `TREE.md`**。mermaid 图、ASCII 树、进度条这类可视化**只能由 `scripts/check_tree.py` 生成**，禁止手写第二份副本——手写副本一定和真源漂移。
-- 产物（`TREE.md`、`versions/*.md`）**只描述项目本身**。禁止在里面写「根据 dev-companion 规范第 X 条」这类协议元信息，那是泄漏，用户不需要知道。
+- 产物（`TREE.md`、`versions/*.md`）**只描述项目本身**。禁止在里面写「根据 dev-companion-skill 规范第 X 条」这类协议元信息，那是泄漏，用户不需要知道。
 
 ---
 
@@ -51,7 +51,7 @@
 当预计层级 > 4 层时用 B。列表缩进到第 5 层就难读，表格不会。
 
 ```markdown
-<!-- dev-companion:tree format=table -->
+<!-- dev-companion-skill:tree format=table -->
 
 | ID | 状态 | 节点 | 版本 |
 |---|---|---|---|
@@ -61,7 +61,7 @@
 | 1.2 | [ ] | 接入真实的邮件发送 | [v004](versions/004-mail.md) |
 ```
 
-层级由 ID 的点分位数决定（`1.1.1` 的父是 `1.1`），与表格行顺序无关（脚本会先扫全量 ID 再校验父子，所以乱序写也可以）。切换格式要添加或删除 `<!-- dev-companion:tree format=table -->` 标记行，并同步重写整个表。
+层级由 ID 的点分位数决定（`1.1.1` 的父是 `1.1`），与表格行顺序无关（脚本会先扫全量 ID 再校验父子，所以乱序写也可以）。切换格式要添加或删除 `<!-- dev-companion-skill:tree format=table -->` 标记行，并同步重写整个表。
 
 > **推荐值**：默认用 A；当同一条链路上的决策预计超过 4 次时，改用 B。不要在两种格式之间来回切。
 
@@ -269,11 +269,11 @@ D1（方案选型）下落选行写「不产生节点」；D2（任务排序）�
 
 ```bash
 # 用本 skill 目录里的脚本，不是用户项目里的（脚本不复制进用户项目）
-python ~/.workbuddy/skills/dev-companion/scripts/check_tree.py <project-root>            # 人读输出
-python ~/.workbuddy/skills/dev-companion/scripts/check_tree.py <project-root> --map      # 额外打印当前路径面包屑
-python ~/.workbuddy/skills/dev-companion/scripts/check_tree.py <project-root> --mermaid  # 额外生成 mermaid 图（可视化，不落盘为第二份真源）
-python ~/.workbuddy/skills/dev-companion/scripts/check_tree.py <project-root> --progress # 额外输出一行进度（能力 C 用）
-python ~/.workbuddy/skills/dev-companion/scripts/check_tree.py --selftest                # 校验脚本自身没写错
+python ~/.workbuddy/skills/dev-companion-skill/scripts/check_tree.py <project-root>            # 人读输出
+python ~/.workbuddy/skills/dev-companion-skill/scripts/check_tree.py <project-root> --map      # 额外打印当前路径面包屑
+python ~/.workbuddy/skills/dev-companion-skill/scripts/check_tree.py <project-root> --mermaid  # 额外生成 mermaid 图（可视化，不落盘为第二份真源）
+python ~/.workbuddy/skills/dev-companion-skill/scripts/check_tree.py <project-root> --progress # 额外输出一行进度（能力 C 用）
+python ~/.workbuddy/skills/dev-companion-skill/scripts/check_tree.py --selftest                # 校验脚本自身没写错
 ```
 
 用于覆盖 I6 里**可自动校验的那部分**：
