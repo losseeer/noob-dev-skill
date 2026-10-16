@@ -1,6 +1,6 @@
 ---
 name: requirement-analysis-skill
-description: Convert fuzzy ideas, user feedback, issues, chat logs, or code comments into reviewable, versioned, AI-readable requirement artifacts. Produces coverage matrices, requirement cards with Given/When/Then acceptance criteria, quality gate results, traceability matrices, split plans, and change diffs. Trigger on 需求分析 / 帮我分析这个需求 / 这个需求怎么写 / 需求澄清 / 需求评审 / 验收标准 / 需求变更 / 需求拆分, or before development splitting and requirement review. Do NOT use for deciding whether a requirement should be done at all — that is the scope gate owned by project-positioning-skill.
+description: Convert fuzzy ideas, user feedback, issues, chat logs, or code comments into reviewable, versioned, AI-readable requirement artifacts. Produces coverage matrices, requirement cards with Given/When/Then acceptance criteria, quality gate results, traceability matrices, split plans, and change diffs. Trigger on 需求分析 / 帮我分析这个需求 / 这个需求怎么写 / 需求澄清 / 需求评审 / 验收标准 / 需求变更 / 需求拆分, or before development splitting and requirement review. Do NOT use for deciding whether a requirement should be done at all — that is the scope gate owned by project-positioning-skill. Do NOT use for choosing technology, designing data models or interfaces, or building UI prototypes — that is owned by solution-design-skill. Do NOT use for explaining concepts or tracking day-to-day build progress — that is owned by dev-companion.
 ---
 
 # Requirement Analysis Skill
@@ -41,6 +41,20 @@ description: Convert fuzzy ideas, user feedback, issues, chat logs, or code comm
 5. 其余新想法、用户反馈、Issue、聊天记录、「帮我分析这个需求」，执行**完整流程**（步骤 1-6，按需 7-9）。
 
 **变窄规则**：若用户只要求其中一步（例如「只写验收标准」），只执行该步骤，并把缺的上游信息标为 `missing` 后显式告知，不静默补跑全流程。
+
+## 相邻 Skill 的归属裁决
+
+平台只靠 `description` 路由，四个 Skill 同时装必然有边界模糊的请求。判不清时按下表裁决：
+
+| 情形 | 归属 |
+|---|---|
+| 「这个需求内容该怎么写」「验收标准是什么」「帮我补全这个需求」 | **本 Skill** |
+| 「这个需求该不该做」「是不是超出范围」 | `project-positioning-skill`（这类只出范围判定结论，不走本 Skill 的覆盖矩阵） |
+| 「用什么技术实现」「数据模型怎么设计」「画个原型看看」 | `solution-design-skill` |
+| 「下一步干嘛」「术语看不懂」 | `dev-companion` |
+
+注意「这个需求该不该做」与「帮我分析这个需求」的区别：前者是范围判定，归定位 Skill；
+后者是需求内容分析，归本 Skill。两者只差几个字，判错会让整个流程走错方向。
 
 ## 证据与状态
 

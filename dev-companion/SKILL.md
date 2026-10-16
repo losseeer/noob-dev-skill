@@ -1,6 +1,6 @@
 ---
 name: dev-companion
-description: "Build a software project together with a beginner developer. Three capabilities: (A) always-on — keep a project development status tree at dev-tree/TREE.md whose checkbox nodes each record a decision and link to a version snapshot .md, branching a subtree on every 「which implementation」 or 「which task first」 decision the user answers; (B) on demand — explain things in plain language with no undefined jargon, conclusion first, then minimal runnable code, then step-by-step, then a glossary; (C) on demand — action-first output shaping for a reader who cannot get started (next action on line one, numbered steps, progress restated from the real tree each turn, tangents suppressed). Use when the user is building a project with an agent and asks 解释 / 看不懂 / 什么意思 / 用大白话 / 我是新手, says 直接给我下一步 / 别废话 / 太长了 / 开 adhd 模式, or wants a visible, resumable plan that survives across sessions. Do NOT use for standalone questions about existing code with nothing being built, or for throwaway one-off scripts."
+description: "Build a software project together with a beginner developer. Three capabilities: (A) always-on — keep a project development status tree at dev-tree/TREE.md whose checkbox nodes each record a decision and link to a version snapshot .md, branching a subtree on every 「which implementation」 or 「which task first」 decision the user answers; (B) on demand — explain things in plain language with no undefined jargon, conclusion first, then minimal runnable code, then step-by-step, then a glossary; (C) on demand — action-first output shaping for a reader who cannot get started (next action on line one, numbered steps, progress restated from the real tree each turn, tangents suppressed). Use when the user is building a project with an agent and asks 解释 / 看不懂 / 什么意思 / 用大白话 / 我是新手, says 直接给我下一步 / 别废话 / 太长了 / 开 adhd 模式, or wants a visible, resumable plan that survives across sessions. Owns plain-language explanation even when nothing is being built — answer those with capability B, but do not build a tree. Do NOT use for deciding scope or positioning, writing requirement cards, choosing technology, or producing design artifacts and UI prototypes — those belong to project-positioning-skill, requirement-analysis-skill, and solution-design-skill respectively. Note that a UI prototype is a reviewed deliverable registered in .project/design/current.yaml, not a throwaway script. Do NOT use for genuinely disposable one-off scripts the user deletes right after running."
 agent_created: true
 ---
 
@@ -40,9 +40,28 @@ agent_created: true
 
 **Do NOT use：**
 
-- 纯问答：只是解释现有代码、不改任何东西 → 直接回答，不建树。
-- 一次性的临时脚本，写完就扔 → 不建树（用户明确要除外）。
+- **真正写完就删的一次性脚本** → 不建树（用户明确要除外）。
+  **UI 原型 / demo 不属于这一类**——它们是 `solution-design-skill` 的交付物，登记在
+  `.project/design/current.yaml` 里、要过 review，交给那个 Skill，别当成一次性脚本拦掉。
 - 用户已经明确说「别记了，直接做」→ 关闭 A 的状态树更新，但保留已有 TREE.md 不动。
+- 决定范围与定位、写需求卡、做技术选型与产出设计文档 → 分别归另外三个 Skill，本 Skill 不接。
+  详见下方「相邻 Skill 的归属裁决」。
+
+**纯问答仍然归本 Skill**：只是解释现有代码或某个概念、不改任何东西时，用能力 B 回答，
+**不建树**。这条保证这类请求不会被互相推给别人、落到没人管的地方。
+
+## 相邻 Skill 的归属裁决
+
+平台只靠 `description` 路由，四个 Skill 同时装必然有边界模糊的请求。判不清时按下表裁决：
+
+| 情形 | 归属 |
+|---|---|
+| 「这是在干嘛 / 为什么这样写」——只解释不落文件 | **本 Skill**，能力 B，不建树 |
+| 「下一步干嘛」「先做哪个任务」 | **本 Skill**（能力 C）；但选型还没定的先让 `solution-design-skill` 定 |
+| 「用 A 还是 B 实现」——技术选型本身 | `solution-design-skill`，产出 `stack.yaml` + ADR |
+| 「做个能点的 demo / 画个原型」 | `solution-design-skill`，不是一次性脚本 |
+| 「这个需求该不该做 / 项目要不要升级定位」 | `project-positioning-skill` |
+| 「这个需求怎么写 / 验收标准」 | `requirement-analysis-skill` |
 
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: project-positioning-skill
-description: This skill should be used when starting a software project, reviewing a project's scope before requirements analysis, evaluating whether a new requirement fits the current positioning, or repositioning an existing project. It converts non-technical developer input into reviewable, versioned positioning artifacts and applies those artifacts as a requirement gate. Trigger on requests such as “帮我定位这个项目”, “这个需求该不该做”, “项目要不要升级定位”, or before substantial project planning. Do NOT use for writing requirement cards, acceptance criteria, or quality review of requirement wording — that is owned by requirement-analysis-skill.
+description: This skill should be used when starting a software project, reviewing a project's scope before requirements analysis, evaluating whether a new requirement fits the current positioning, or repositioning an existing project. It converts non-technical developer input into reviewable, versioned positioning artifacts and applies those artifacts as a requirement gate. Trigger on requests such as “帮我定位这个项目”, “这个需求该不该做”, “项目要不要升级定位”, or before substantial project planning. Do NOT use for writing requirement cards, acceptance criteria, or quality review of requirement wording — that is owned by requirement-analysis-skill. Do NOT use for choosing technology, designing data models or interfaces, or building UI prototypes — that is owned by solution-design-skill. Do NOT use for explaining concepts or tracking day-to-day build progress — that is owned by dev-companion.
 ---
 
 # Project Positioning Skill
@@ -16,6 +16,19 @@ description: This skill should be used when starting a software project, reviewi
 3. 已有定位卡，且命中 `reposition_triggers` 或用户明确要求改变定位时，执行重定位。
 4. 用户要求 review 现有定位时，执行定位 review。
 5. 其余新项目启动、需求分析前置或“帮我定位项目”请求，执行首次定位。
+
+## 相邻 Skill 的归属裁决
+
+平台只靠 `description` 路由，四个 Skill 同时装必然有边界模糊的请求。判不清时按下表裁决：
+
+| 情形 | 归属 |
+|---|---|
+| 「这个需求该不该做」「要不要升级定位」「我的项目是什么类型」 | **本 Skill**（范围判定） |
+| 「这个需求怎么写」「验收标准是什么」 | `requirement-analysis-skill` |
+| 「用什么技术实现」「数据模型怎么设计」「画个原型看看」 | `solution-design-skill` |
+| 「下一步干嘛」「术语看不懂」「进度到哪了」 | `dev-companion` |
+
+判定的分界线是「这是范围问题还是实现问题」——只要问的是要不要、能不能、属于哪一类，就在本 Skill。
 
 ## 证据与状态
 
