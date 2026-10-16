@@ -28,14 +28,27 @@
 每个 Skill 单独复制到 WorkBuddy 的 skills 目录。**复制子目录，不要复制整个包**：
 
 ```bash
+PKG=<本包目录>
+DEST=~/.workbuddy/skills
+
 # 全装
-cp -r <本包目录>/project-positioning-skill ~/.workbuddy/skills/
-cp -r <本包目录>/requirement-analysis-skill ~/.workbuddy/skills/
-cp -r <本包目录>/dev-companion            ~/.workbuddy/skills/
+rsync -a --exclude '.workbuddy/' --exclude 'dist/' --exclude 'outputs/' \
+      "$PKG/project-positioning-skill"  "$DEST/"
+rsync -a --exclude '.workbuddy/' --exclude 'dist/' --exclude 'outputs/' \
+      "$PKG/requirement-analysis-skill" "$DEST/"
+rsync -a --exclude '.workbuddy/' --exclude 'dist/' --exclude 'outputs/' \
+      "$PKG/dev-companion"              "$DEST/"
 
 # 只装其中一个也完全可以，例如
-cp -r <本包目录>/dev-companion ~/.workbuddy/skills/
+rsync -a --exclude '.workbuddy/' --exclude 'dist/' --exclude 'outputs/' \
+      "$PKG/dev-companion" "$DEST/"
 ```
+
+**为什么不能用裸 `cp -r`**：`.workbuddy/`（本机会话与项目笔记）、`dist/`（打包产物）、
+`outputs/`（运行时产物）三项都写在包根 `.gitignore` 里，但 `cp -r` 不看 `.gitignore`，
+会原样把它们拷进运行时安装目录。macOS 与主流 Linux 均自带 `rsync`。
+
+没有 rsync 时，用 `cp -r` 装完后手动删掉各 skill 目录下的 `.workbuddy/`、`dist/`、`outputs/`。
 
 安装后目录名必须与各 `SKILL.md` 里的 `name` 字段一致（平台按这个识别）。
 
