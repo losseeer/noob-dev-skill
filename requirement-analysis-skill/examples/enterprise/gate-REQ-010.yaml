@@ -1,0 +1,53 @@
+version: 1
+requirement_id: REQ-010
+version_of_requirement: v0.1
+as_of: 2026-10-12
+reviewer: requirement-analysis-skill
+revision_round: 1
+scope_note: 本结论仅代表需求质量，不代表该需求是否该做；本需求已产出 3 条定位候选，正在等待项目定位 Skill 的范围门禁。
+
+checks:
+  unambiguous:
+    name: unambiguous
+    result: pass
+    rule_id: QC-001
+    detail: 无模糊词命中；「账期」「明细行」已在 glossary 定义
+  testable:
+    name: testable
+    result: pass
+    rule_id: QC-002
+    detail: 7 条 AC 均为 Given/When/Then，then 全是外部可观测结果
+  complete:
+    name: complete
+    result: pass
+    rule_id: QC-003
+    detail: P0 维度齐全；unauthenticated 场景不适用（功能位于登录后区域），已在假设与前置条件中说明
+    locations: []
+  consistent:
+    name: consistent
+    result: pass
+    rule_id: QC-004
+    detail: 无 conflict 规则命中；同步/异步分支由行数阈值明确划分
+  feasible:
+    name: feasible
+    result: pass
+    rule_id: QC-005
+    detail: 高风险性能假设已拆出探针子需求 REQ-011，符合 SPL-003 与 PRIO-005
+  traceable:
+    name: traceable
+    result: pass
+    rule_id: QC-006
+    detail: trace.source 为会议记录 2026-10-12
+  prioritized:
+    name: prioritized
+    result: pass
+    rule_id: QC-007
+    detail: priority 为 must，7 条 AC 覆盖了 main_flow 与全部 exception_flows，满足 PRIO-001
+
+decision: pass
+
+issues: []
+
+action: 无。执行顺序建议：先做 REQ-011 探针，再实现 REQ-010 的异步分支（见 prompts/07_split_and_plan.md）。
+
+rerun_advice: REQ-011 产出结论后需回写阈值，届时按 prompts/08_change_manage.md 重新出具门禁结论。

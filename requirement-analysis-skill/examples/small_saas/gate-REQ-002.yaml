@@ -1,0 +1,66 @@
+version: 1
+requirement_id: REQ-002
+version_of_requirement: v0.1
+as_of: 2026-10-08
+reviewer: requirement-analysis-skill
+revision_round: 1
+scope_note: 本结论仅代表需求质量，不代表该需求是否该做；范围门禁由项目定位 Skill 负责。
+
+checks:
+  unambiguous:
+    name: unambiguous
+    result: fail
+    rule_id: QC-001
+    detail: non_functional 出现模糊词「尽快」，命中 forbidden_words
+    locations: ["non_functional[0]"]
+  testable:
+    name: testable
+    result: pass
+    rule_id: QC-002
+    detail: 6 条 AC 均具备 Given/When/Then
+  complete:
+    name: complete
+    result: fail
+    rule_id: QC-003
+    detail: unauthenticated 场景未覆盖且 test_notes 未注明不适用原因；令牌失效/被撤销的异常流程缺失
+    locations: [acceptance_criteria, exception_flows]
+  consistent:
+    name: consistent
+    result: pass
+    rule_id: QC-004
+    detail: CON-002、CON-007 已消解并写入 assumptions，剩余一致性 OK
+  feasible:
+    name: feasible
+    result: pass
+    rule_id: QC-005
+    detail: 依赖已有用户体系，无未验证外部系统
+  traceable:
+    name: traceable
+    result: pass
+    rule_id: QC-006
+    detail: trace.source 为用户反馈 2026-10-08
+  prioritized:
+    name: prioritized
+    result: pass
+    rule_id: QC-007
+    detail: priority 为 should，验收覆盖 happy_path 与主要异常，满足 PRIO-001 的下位要求
+
+decision: revise
+
+issues:
+  - check: complete
+    severity: blocking
+    message: 缺少 unauthenticated 场景验收标准——未受邀请的访问者打开链接、以及令牌失效/被撤销后的行为没有定义
+    rule_id: QC-003
+    location: acceptance_criteria / exception_flows
+    fix: 补 AC-007（未携带有效令牌访问，展示「链接不可用」并给出联系管理员入口）与名为「令牌失效」的异常流程；若确实不适用，必须在 test_notes 写明原因
+  - check: unambiguous
+    severity: blocking
+    message: non_functional 中的「尽快生效」无法验收
+    rule_id: QC-001
+    location: non_functional[0]
+    fix: 替换为可量化描述，例如「从提交验证码到成员出现在成员页 P95 < 1s（本地网络）」
+
+action: 补充 AC-007 与「令牌失效」异常流程，并把「尽快生效」替换成带数字、单位与条件的指标后重新评审。两项改完预计可到 pass。
+
+rerun_advice: 建议两项一次性改完再重跑，不要在半份草稿上反复跑门禁；若第二轮仍存在 blocking 项，按 decision_mapping 转 reject。

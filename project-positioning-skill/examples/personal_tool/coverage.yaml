@@ -1,0 +1,167 @@
+version: 1
+as_of: 2026-10-15
+coverage:
+  - dimension: users
+    priority: P0
+    status: explicit
+    value: [self]
+    evidence:
+      - source: input.md
+        excerpt: "只给自己用"
+  - dimension: charging
+    priority: P0
+    status: explicit
+    value: false
+    evidence:
+      - source: input.md
+        excerpt: "不收费"
+  - dimension: data
+    priority: P0
+    status: explicit
+    value: local_financial_records
+    evidence:
+      - source: input.md
+        excerpt: "数据只放在本机 SQLite"
+  - dimension: data_sensitivity
+    priority: P0
+    status: inferred
+    value: personal
+    evidence:
+      - source: input.md
+        excerpt: "记账工具"
+    reason: "个人账目属于个人数据，但输入没有监管数据证据。"
+    confidence: 0.9
+  - dimension: compliance
+    priority: P0
+    status: explicit
+    value: low
+    evidence:
+      - source: questionnaire
+        excerpt: "仅处理自己的账目，不受单位或行业监管要求约束"
+  - dimension: criticality
+    priority: P0
+    status: explicit
+    value: low
+    evidence:
+      - source: input.md
+        excerpt: "不是业务关键系统"
+  - dimension: scale
+    priority: P1
+    status: inferred
+    value: 1
+    evidence:
+      - source: input.md
+        excerpt: "只给自己用"
+    reason: "唯一用户为开发者本人。"
+    confidence: 0.98
+  - dimension: delivery
+    priority: P1
+    status: explicit
+    value: local
+    evidence:
+      - source: input.md
+        excerpt: "macOS 记账工具；不联网"
+  - dimension: maintenance
+    priority: P2
+    status: explicit
+    value: "<=2h/week"
+    evidence:
+      - source: input.md
+        excerpt: "每周最多维护两小时"
+  - dimension: stage
+    priority: P1
+    status: inferred
+    value: mvp
+    evidence:
+      - source: input.md
+        excerpt: "先做录入、分类和月度汇总"
+    reason: "描述的是首个可用功能集合。"
+    confidence: 0.9
+  - dimension: form
+    priority: P2
+    status: explicit
+    value: macos_desktop_app
+    evidence:
+      - source: input.md
+        excerpt: "macOS 记账工具"
+  - dimension: regulation
+    priority: P0
+    status: explicit
+    value: none
+    evidence:
+      - source: questionnaire
+        excerpt: "不受单位或行业监管要求约束"
+  - dimension: data_loss
+    priority: P1
+    status: explicit
+    value: manual_recovery_acceptable
+    evidence:
+      - source: input.md
+        excerpt: "丢几天数据会很麻烦；希望可以手工导出备份"
+  - dimension: enterprise
+    priority: P1
+    status: inferred
+    value: false
+    evidence:
+      - source: input.md
+        excerpt: "只给自己用"
+    reason: "用户范围明确排除企业使用。"
+    confidence: 0.98
+  - dimension: contractual_obligation
+    priority: P1
+    status: inferred
+    value: false
+    evidence:
+      - source: input.md
+        excerpt: "只给自己用；不收费"
+    reason: "没有外部服务对象或合同承诺。"
+    confidence: 0.95
+  - dimension: audit_required
+    priority: P1
+    status: explicit
+    value: false
+    evidence:
+      - source: questionnaire
+        excerpt: "不需要审计记录"
+  - dimension: auth
+    priority: P1
+    status: inferred
+    value: none
+    evidence:
+      - source: input.md
+        excerpt: "只给自己用；数据只放在本机"
+    reason: "访问边界是用户自己的本机账户。"
+    confidence: 0.9
+  - dimension: i18n
+    priority: P2
+    status: undecided
+    value: false
+    evidence:
+      - source: questionnaire
+        excerpt: "还没想好，先只做中文"
+    review_trigger: "需要录入或展示第二种语言"
+questions: []
+skipped:
+  - dimension: experience
+    reason: "当前约束由低维护预算覆盖，不需要单独限制技术栈。"
+defaults_applied:
+  - dimension: downtime
+    value: best_effort
+    rule_id: D-P1-DOWNTIME
+    reason: "没有持续在线要求。"
+    review_trigger: "出现不可接受停机的真实后果。"
+  - dimension: budget
+    value: 0
+    rule_id: D-P2-BUDGET
+    reason: "未批准固定付费依赖。"
+    review_trigger: "用户明确批准开发或运行预算。"
+  - dimension: rewrite
+    value: avoid
+    rule_id: D-P2-REWRITE
+    reason: "当前没有重写必要性证据。"
+    review_trigger: "关键约束无法通过兼容演进满足。"
+  - dimension: i18n
+    value: false
+    rule_id: D-P2-I18N
+    reason: "没有第二语言用户证据。"
+    review_trigger: "出现明确的第二语言使用需求。"

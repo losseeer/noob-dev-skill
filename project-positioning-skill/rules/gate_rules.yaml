@@ -1,0 +1,100 @@
+version: 1
+strategy: first_match
+condition_language:
+  fields:
+    - positioning_status
+    - risk_state
+    - prohibited_even_after_reposition
+    - in_do_not
+    - trigger_reposition
+    - exceeds_hard_budget
+    - core_path
+    - fits_scope
+  operators: [eq]
+rules:
+  - id: G-000-FROZEN
+    priority: 0
+    when:
+      field: positioning_status
+      operator: eq
+      value: frozen
+    decision: out_of_scope
+    action: "先由用户明确解冻定位基线，再执行重定位 review。"
+  - id: G-001-PROHIBITED
+    priority: 1
+    when:
+      field: prohibited_even_after_reposition
+      operator: eq
+      value: true
+    decision: reject
+    action: "停止实现；该请求不因扩大项目范围而变得可接受。"
+  - id: G-002-UNRESOLVED-RISK
+    priority: 2
+    when:
+      field: risk_state
+      operator: eq
+      value: unresolved
+    decision: reject
+    action: "停止实现，先补齐安全、合规或不可逆数据风险证据。"
+  - id: G-003-HARD-BLOCKER
+    priority: 3
+    when:
+      field: risk_state
+      operator: eq
+      value: blocked
+    decision: reject
+    action: "停止实现，先解决已确认的安全、合规或不可逆数据风险。"
+  - id: G-010-DO-NOT
+    priority: 10
+    when:
+      field: in_do_not
+      operator: eq
+      value: true
+    decision: out_of_scope
+    action: "记录为升级候选；满足对应 upgrade_trigger 后执行重定位。"
+  - id: G-020-REPOSITION
+    priority: 20
+    when:
+      field: trigger_reposition
+      operator: eq
+      value: true
+    decision: out_of_scope
+    action: "先执行重定位，不在旧定位下实现。"
+  - id: G-030-HARD-BUDGET
+    priority: 30
+    when:
+      field: exceeds_hard_budget
+      operator: eq
+      value: true
+    decision: reject
+    action: "拆分或降级需求，直到符合维护与成本硬约束。"
+  - id: G-040-CORE
+    priority: 40
+    when:
+      field: core_path
+      operator: eq
+      value: true
+    decision: must
+    action: "进入需求分析，并保持当前定位约束。"
+  - id: G-050-FITS
+    priority: 50
+    when:
+      field: fits_scope
+      operator: eq
+      value: true
+    decision: should
+    action: "进入优先级评估，不自动承诺实现。"
+  - id: G-999-NO-MATCH
+    priority: 999
+    when:
+      field: fits_scope
+      operator: eq
+      value: false
+    decision: out_of_scope
+    action: "记录 current.yaml#scope:no-match；补充范围证据或执行重定位 review。"
+requirements:
+  result_fields_equal_condition_fields: true
+  out_of_scope_requires_upgrade_trigger: true
+  matched_rules_must_include_evidence_path: true
+  no_match_evidence: "current.yaml#scope:no-match"
+  gate_does_not_authorize_implementation: true

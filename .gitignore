@@ -1,4 +1,9 @@
-# 本机会话与项目笔记（不是 skill 的一部分，不入库）
-.workbuddy/
+# 本机会话与项目笔记，不是 skill 的一部分
+**/.workbuddy/
 
 .DS_Store
+
+# 运行时产物与打包产物
+outputs/
+dist/
+*.zip

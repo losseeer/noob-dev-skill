@@ -1,0 +1,252 @@
+version: 1
+requirement_id: REQ-001
+title: 收藏文章
+as_of: 2026-10-01
+source_summary: 个人博客作者反馈：点击收藏按钮没反应、刷新后丢失、他人可见
+positioning_context: not_found
+ready_for_modeling: true
+
+coverage:
+  - dimension: actor
+    priority: P0
+    status: explicit
+    value: [文章阅读者（本人）, 未登录访客]
+    evidence:
+      - source: 用户反馈 2026-10-01
+        excerpt: "我在自己那个小博客上加了篇文章收藏，点那个星星按钮没啥反应"
+      - source: 用户反馈 2026-10-01
+        excerpt: "我朋友说他没登录也能看到我收藏的东西"
+    confidence: 0.9
+
+  - dimension: goal
+    priority: P0
+    status: inferred
+    value: 读者能把文章存下来留着以后再看，而且这件事只有他自己知道
+    reason: 用户使用「收藏」一词并投诉他人可见，说明目标包含「私密保存供以后阅读」两层含义
+    confidence: 0.85
+    evidence:
+      - source: 用户反馈 2026-10-01
+        excerpt: "我加了篇文章收藏"
+      - source: 用户反馈 2026-10-01
+        excerpt: "我朋友说他没登录也能看到我收藏的东西，这不应该吧"
+
+  - dimension: trigger
+    priority: P0
+    status: explicit
+    value: 在文章详情页点击星星（收藏）按钮
+    evidence:
+      - source: 用户反馈 2026-10-01
+        excerpt: "点那个星星按钮没啥反应"
+    confidence: 0.95
+
+  - dimension: main_flow
+    priority: P0
+    status: inferred
+    value:
+      - 点击收藏按钮
+      - 写入收藏记录（article_id + reader_id）
+      - 按钮切换为已收藏状态并给出成功提示
+    reason: 用户描述的是「点了没反应」，说明预期动作链条是点击→持久化→可见反馈
+    confidence: 0.75
+    evidence:
+      - source: 用户反馈 2026-10-01
+        excerpt: "点那个星星按钮没啥反应，也不知道到底成功没有"
+
+  - dimension: acceptance
+    priority: P0
+    status: explicit
+    value: 点击后必须立刻给出成功与否的可见状态，刷新后状态依然保留
+    evidence:
+      - source: 用户反馈 2026-10-01
+        excerpt: "也不知道到底成功没有"
+      - source: 用户反馈 2026-10-01
+        excerpt: "有时候刷新一下发现又没了"
+    confidence: 0.9
+
+  - dimension: data
+    priority: P0
+    status: explicit
+    value:
+      inputs: [article_id, reader_id]
+      outputs: [favorite_id, created_at]
+      entities: [Favorite]
+    evidence:
+      - source: 用户反馈 2026-10-01
+        excerpt: "有时候刷新一下发现又没了"
+      - source: 用户反馈 2026-10-01
+        excerpt: "我朋友说他没登录也能看到我收藏的东西"
+    confidence: 0.85
+
+  - dimension: exception
+    priority: P0
+    status: inferred
+    value: 写失败时提示失败并保留按钮可重试，记录结构化日志
+    reason: 写操作若无失败处理，会出现与当前反馈同类的「点了没反应」现象
+    rule_id: DEF-003
+    confidence: 0.8
+    evidence:
+      - source: 推断依据 DEF-003
+        excerpt: 网络请求失败 → 提示网络异常，提供重试入口，不自动无限重试
+
+  - dimension: permission
+    priority: P0
+    status: explicit
+    value: 收藏记录仅创建者本人可见可操作，其他人不返回任何收藏数据
+    evidence:
+      - source: 用户反馈 2026-10-01
+        excerpt: "我朋友说他没登录也能看到我收藏的东西，这不应该吧"
+    confidence: 0.9
+
+  - dimension: preconditions
+    priority: P1
+    status: inferred
+    value:
+      - 读者处于文章详情页
+      - 该文章存在且处于已发布状态
+    reason: 收藏按钮本身就位于文章详情页，隐含页面已加载
+    confidence: 0.8
+    evidence:
+      - source: 用户反馈 2026-10-01
+        excerpt: "点那个星星按钮没啥反应"
+
+  - dimension: alternate_flow
+    priority: P1
+    status: undecided
+    value: 已收藏状态下再次点击 = 取消收藏
+    reason: 用户未提及取消场景，按收藏类功能的常规语义给出默认值
+    rule_id: DEF-001
+    review_trigger: 设计稿确认按钮是否有「取消收藏」态，或用户首次提到「怎么取消」时复审
+    confidence: 0.6
+    evidence:
+      - source: 推断依据 DEF-001
+        excerpt: 未说明时按常规收藏语义处理，并在需求卡 open_questions 留痕
+
+  - dimension: non_functional
+    priority: P1
+    status: inferred
+    value: 收藏操作接口 P95 < 500ms（本地网络，单次请求）
+    reason: 交互类写操作需要量化时延指标才能验收
+    rule_id: DEF-009
+    confidence: 0.7
+    evidence:
+      - source: 推断依据 DEF-009
+        excerpt: 用户操作类接口 < 500ms，列表分页查询 < 1s（P95，本地网络）
+
+  - dimension: interface
+    priority: P1
+    status: inferred
+    value: 不新增外部接口，仅描述内部行为
+    reason: 未被外部系统调用，过早固定接口形状会锁死实现
+    rule_id: DEF-011
+    review_trigger: 出现移动端 App 或第三方调用诉求时重新定义接口
+    confidence: 0.7
+    evidence:
+      - source: 推断依据 DEF-011
+        excerpt: 未说明接口时默认不新增外部接口，只描述内部行为
+
+  - dimension: dependency
+    priority: P1
+    status: inferred
+    value: []
+    reason: 个人博客已具备文章详情页，无外部依赖
+    rule_id: DEF-012
+    confidence: 0.8
+    evidence:
+      - source: 推断依据 DEF-012
+        excerpt: 默认为空依赖，发现依赖时补入 dependencies
+
+  - dimension: glossary
+    priority: P2
+    status: inferred
+    value:
+      - term: 收藏
+        definition: 读者把文章加入个人稍后阅读列表的动作，仅本人可见
+      - term: Favorite
+        definition: 一条收藏记录，关联 reader_id 与 article_id
+    reason: 复用用户原词，避免与「点赞」「书签」混用
+    rule_id: DEF-013
+    confidence: 0.85
+    evidence:
+      - source: 推断依据 DEF-013
+        excerpt: 默认复用已有术语；无法复用时才新增并写入 glossary
+
+  - dimension: trace
+    priority: P2
+    status: explicit
+    value: 用户反馈 2026-10-01
+    evidence:
+      - source: 用户反馈 2026-10-01
+        excerpt: "我在自己那个小博客上加了篇文章收藏"
+    confidence: 0.95
+
+  - dimension: risk
+    priority: P2
+    status: explicit
+    value:
+      - description: 收藏未持久化，刷新后丢失
+        level: high
+        mitigation: 明确写入 Favorite 表并返回 favorite_id，验收覆盖刷新场景
+      - description: 收藏数据被他人可见
+        level: high
+        mitigation: 查询以 reader_id 为强制过滤条件，验收覆盖越权场景
+    evidence:
+      - source: 用户反馈 2026-10-01
+        excerpt: "有时候刷新一下发现又没了"
+      - source: 用户反馈 2026-10-01
+        excerpt: "我朋友说他没登录也能看到我收藏的东西"
+    confidence: 0.9
+
+  - dimension: test_notes
+    priority: P2
+    status: inferred
+    value:
+      - concurrency 场景不适用：单人博客场景无并发写同一收藏的实际风险
+      - idempotency 场景按 boundary 处理：重复收藏不产生第二条记录（DEF-008）
+    reason: 需明确说明哪些标准场景不适用，避免把「留空」当成「确认过不需要」
+    rule_id: DEF-015
+    confidence: 0.7
+    evidence:
+      - source: 推断依据 DEF-015
+        excerpt: 不适用的标准场景必须写明「不适用 + 原因」，不允许留空
+
+questions: []
+
+skipped:
+  - dimension: trigger
+    reason: 用户明确描述了触发动作，无需再问
+    rule_id: COV-006
+  - dimension: permission
+    reason: 用户已明确表达「他人可见不应该」，结论确定
+    rule_id: COV-006
+  - dimension: trace
+    reason: 来源明确为 2026-10-01 的用户反馈
+    rule_id: COV-006
+
+defaults_applied:
+  - dimension: exception
+    value: 提示失败并保留按钮可重试，记录结构化日志
+    rule_id: DEF-003
+    reason: 写操作失败无处理会导致「点了没反应」再次出现
+    review_trigger: 引入后台重试队列后需重新确认重试语义
+  - dimension: non_functional
+    value: 操作接口 P95 < 500ms
+    rule_id: DEF-009
+    reason: 非功能需求必须可量化才能验收
+    review_trigger: 上线后按真实流量复核 P95
+  - dimension: interface
+    value: 不新增外部接口
+    rule_id: DEF-011
+    reason: 无外部调用方
+    review_trigger: 出现移动端或第三方调用时重新定义
+  - dimension: dependency
+    value: []
+    rule_id: DEF-012
+    reason: 依赖已具备的文章详情页
+    review_trigger: 每次需求变更时重新扫描依赖
+  - dimension: test_notes
+    value: 不适用场景必须写明原因
+    rule_id: DEF-015
+    reason: 防止留空被误读为已确认
+    review_trigger: 需求范围变化时重新逐条核对
+
+conflicts: []

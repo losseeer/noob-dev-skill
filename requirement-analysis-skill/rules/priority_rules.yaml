@@ -1,0 +1,58 @@
+version: 1
+
+scale:
+  must:
+    id: must
+    rank: 0
+    meaning: 缺了它本次交付不成立
+    gate: 必须有一等公民验收标准，缺任何一个 AC 即 must gate 失败
+  should:
+    rank: 1
+    meaning: 重要但可以分期
+    gate: 至少覆盖正常路径 + 主要异常
+  could:
+    rank: 2
+    meaning: 有余力才做
+    gate: 至少覆盖正常路径
+  wont:
+    rank: 3
+    meaning: 本次明确不做，写进 out_of_scope
+    gate: 不需要验收标准，但必须在 out_of_scope 里写清原因
+
+default: should
+
+rules:
+  - id: PRIO-001
+    name: must_requires_full_acceptance
+    text: priority 为 must 的需求必须有 acceptance_criteria，且覆盖 main_flow 与全部 exception_flows。
+    on_violation: priority 降级为 should，并在 open_questions 记录原因
+  - id: PRIO-002
+    name: wont_must_be_in_out_of_scope
+    text: 被列为 wont 的内容必须出现在 out_of_scope，不允许从需求里静默消失。
+    on_violation: 补回需求正文或写入 out_of_scope
+  - id: PRIO-003
+    name: security_and_data_loss_are_must
+    text: 涉及权限越权、数据丢失、资金差额的需求不允许低于 must；无法降级处理。
+    on_violation: reject 质量门禁，要求重新确认优先级
+  - id: PRIO-004
+    name: dependency_first
+    text: 被他人依赖的需求排在依赖方之前。存在环时必须拆出公共子需求打断环。
+    on_violation: 调整排序或拆分
+  - id: PRIO-005
+    name: risk_probe_first
+    text: 标记为高风险且未验证的需求，先排一个 spike 子需求，再排实现。
+    on_violation: 补 spike 子需求
+
+tie_breakers:
+  - priority_rank: 按 must > should > could > wont
+  - dependency_topology: 被依赖者先做
+  - risk_probe: 高风险探针先于实现
+  - user_value_density: 同等条件下价值高、成本低者先做
+  - smaller_vertical_slice: 最后按可独立交付的最小切片优先
+
+algorithm:
+  recommended: >-
+    先按 priority_rank 分组，组内做依赖拓扑排序，
+    把每个高风险需求替换成「spike + 实现」两个节点且 spike 在前，
+    拓扑序同级时按 user_value_density 降序，再按 vertical slice 大小升序。
+  note: 排序结果必须输出成有序列表，用户可直接采用。

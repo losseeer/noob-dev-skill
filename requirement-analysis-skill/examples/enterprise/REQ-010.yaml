@@ -1,0 +1,187 @@
+id: REQ-010
+title: 导出月度账单 PDF
+version: v0.1
+status: reviewed
+type: functional
+priority: must
+user_story: 作为财务组成员，我要把某个月的账单导出成含订单明细的 PDF 以便留档，并且整个导出动作有据可查。
+
+actors:
+  - 财务组成员
+  - 非财务组成员
+  - 导出任务执行器（系统）
+
+goal: 满足财务月度留档要求，且导出行为可被事后追责
+value: 替代人工整理账单的成本，并满足内部审计要求
+source: 会议记录 2026-10-12（企业客户季度需求沟通）
+
+preconditions:
+  - 目标账期的账单已结算完成
+  - 操作者已登录且属于财务组
+
+triggers:
+  - 财务组成员在账单页选择账期并点击「导出 PDF」
+
+main_flow:
+  - 财务组成员选择账期并点击「导出 PDF」
+  - 系统校验操作者属于财务组
+  - 系统按账期拉取账单明细并关联订单号
+  - 系统生成 PDF 并写入对象存储
+  - 系统记录一条导出操作日志（操作人、时间、账期、任务 ID）
+  - 向操作者提供下载入口
+
+alternate_flows:
+  - name: 大账单异步导出
+    when: 明细行数超过 5000 行
+    steps:
+      - 创建异步导出任务并立即返回受理成功
+      - 任务完成后向操作者发送通知并附下载链接
+      - 下载链接有效期与文件保留期一致
+
+exception_flows:
+  - name: 订单服务不可用
+    when: 拉取明细或关联订单号时下游返回错误
+    steps:
+      - 任务置为失败并展示失败原因
+      - 保留本次任务记录，允许重新发起
+      - 记录结构化日志，含 requirement_id、billing_period、失败原因
+  - name: 超出行数上限
+    when: 明细行数超过 50000 行
+    steps:
+      - 拒绝导出并提示「超出单次上限，请拆分账期」
+      - 不创建导出任务
+
+data:
+  inputs:
+    - billing_period
+    - tenant_id
+    - operator_id
+  outputs:
+    - export_job_id
+    - file_path
+    - checksum
+    - exported_at
+  entities:
+    - BillExportJob
+    - BillLine
+  retention: 导出文件在对象存储保留 30 天，到期自动删除；操作日志保留 1 年
+
+interfaces:
+  - name: 导出任务接口
+    method: POST
+    request:
+      billing_period: string(YYYY-MM)
+    response:
+      export_job_id: string
+      status: string
+    errors:
+      - PERMISSION_DENIED
+      - ROW_LIMIT_EXCEEDED
+      - DOWNSTREAM_UNAVAILABLE
+    idempotency_key: billing_period + operator_id
+    auth: 财务组成员身份，来自权限组服务
+
+permission:
+  - 仅财务组成员可发起导出并下载文件
+  - 非财务组成员访问导出入口返回无权限提示，不透露文件是否存在
+  - 导出任务执行器仅具备对象存储的写权限
+
+non_functional:
+  - 单账期账单行数上限 50000 行
+  - 明细行数超过 5000 行时强制异步导出
+  - 异步导出任务排队后 P95 启动时延 < 5s
+  - 同一 billing_period 与 operator_id 重复发起不产生第二份文件
+
+acceptance_criteria:
+  - id: AC-010
+    scenario: happy_path
+    requirement_id: REQ-010
+    given: 财务组成员已登录，目标账期已结算且明细未超过 5000 行
+    when: 选择账期并点击「导出 PDF」
+    then:
+      - 生成一份 PDF，含该账期全部明细行及每行对应的订单号
+      - 导出记录写入一条操作日志，含操作人、时间、账期、任务 ID
+  - id: AC-011
+    scenario: permission_denied
+    requirement_id: REQ-010
+    given: 非财务组成员已登录
+    when: 访问账单导出入口并发起导出
+    then: 返回无权限提示，响应体不含任何账单数据与文件路径
+  - id: AC-012
+    scenario: boundary
+    requirement_id: REQ-010
+    given: 该账期明细行数为 50001 行
+    when: 发起导出
+    then: 拒绝导出并提示「超出单次上限，请拆分账期」，不创建导出任务
+  - id: AC-013
+    scenario: idempotency
+    requirement_id: REQ-010
+    given: 同一操作者已对同一账期发起过导出任务
+    when: 在 10 秒内重复点击导出 3 次
+    then: 仅产生 1 个导出任务与 1 份文件
+  - id: AC-014
+    scenario: network_failure
+    requirement_id: REQ-010
+    given: 订单服务返回不可用
+    when: 导出任务执行中拉取明细失败
+    then:
+      - 任务状态为失败并展示失败原因
+      - 日志记录一条含 failure_reason 的结构化条目
+      - 任务记录保留，操作者可重新发起
+  - id: AC-015
+    scenario: empty_data
+    requirement_id: REQ-010
+    given: 该账期没有任何明细行
+    when: 发起导出
+    then: 生成一份含空明细表格的 PDF 并标注「本期无计费记录」，不报错
+  - id: AC-016
+    scenario: concurrency
+    requirement_id: REQ-010
+    given: 两名不同财务组成员同时对同一账期发起导出
+    when: 两个请求并发到达
+    then: 各自生成独立的导出任务，文件 checksum 一致且不互相覆盖
+
+out_of_scope:
+  - 导出文件的邮件自动发送
+  - PDF 版式自定义
+  - 跨租户合并账单
+
+dependencies:
+  - 订单服务（明细与订单号）
+  - 权限组服务（财务组身份）
+  - 对象存储（文件落地）
+
+assumptions:
+  - 5000 行异步阈值与 50000 行上限均为待验证初值，由 REQ-011 探针确认后调整
+  - 财务组身份由现有权限组服务提供，本需求不新建权限模型
+
+open_questions:
+  - 文件删除是否需要二次告警；当前按 30 天自动删除处理（undecided）
+
+risks:
+  - description: 大账户同步导出打满请求线程导致服务不可用
+    level: high
+    mitigation: REQ-011 探针先验证异步化方案与阈值，再实现 REQ-010 的异步分支
+    probe: REQ-011
+
+test_notes:
+  - boundary 场景需覆盖：50000 行上限、空账期、跨时区账期边界
+  - concurrency 场景需覆盖：同一账期被两人同时导出
+
+glossary:
+  - term: 账期
+    definition: 一个自然月的账单结算区间，格式 YYYY-MM
+  - term: 明细行
+    definition: 账单内的一条计费记录，含金额与对应订单号
+
+trace:
+  source: 会议记录 2026-10-12
+  source_type: meeting
+  related: []
+  realization: []
+
+updated_at: 2026-10-12
+children:
+  - REQ-011
+history:
+  - v0.1

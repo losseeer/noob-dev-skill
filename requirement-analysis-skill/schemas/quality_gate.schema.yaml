@@ -1,0 +1,138 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://example.local/requirement-analysis/quality_gate.schema.yaml"
+title: Requirement quality gate result
+type: object
+additionalProperties: false
+required:
+  - version
+  - requirement_id
+  - version_of_requirement
+  - as_of
+  - checks
+  - decision
+properties:
+  version:
+    const: 1
+  requirement_id:
+    type: string
+    pattern: "^REQ-[0-9]{3}$"
+  version_of_requirement:
+    type: string
+    pattern: "^v[0-9]+\\.[0-9]+$"
+  as_of:
+    type: string
+    pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+  reviewer:
+    type: string
+  checks:
+    $ref: "#/$defs/checks"
+  decision:
+    enum: [pass, revise, reject]
+  issues:
+    type: array
+    items:
+      $ref: "#/$defs/issue"
+  action:
+    type: string
+  rerun_advice:
+    type: string
+  scope_note:
+    type: string
+    description: 必须说明本结论是质量门禁而非范围门禁
+  revision_round:
+    type: integer
+    minimum: 1
+    maximum: 10
+allOf:
+  - if:
+      properties:
+        decision:
+          enum: [revise, reject]
+      required: [decision]
+    then:
+      required: [issues, action]
+  - if:
+      properties:
+        decision:
+          const: pass
+      required: [decision]
+    then:
+      properties:
+        issues:
+          maxItems: 0
+$defs:
+  check_result:
+    type: object
+    additionalProperties: false
+    required: [result]
+    properties:
+      name:
+        enum:
+          - unambiguous
+          - testable
+          - complete
+          - consistent
+          - feasible
+          - traceable
+          - prioritized
+      result:
+        enum: [pass, fail, unknown]
+      rule_id:
+        type: string
+      detail:
+        type: string
+      locations:
+        type: array
+        items:
+          type: string
+  checks:
+    type: object
+    additionalProperties: false
+    required:
+      - unambiguous
+      - testable
+      - complete
+      - consistent
+      - feasible
+      - traceable
+      - prioritized
+    properties:
+      unambiguous:
+        $ref: "#/$defs/check_result"
+      testable:
+        $ref: "#/$defs/check_result"
+      complete:
+        $ref: "#/$defs/check_result"
+      consistent:
+        $ref: "#/$defs/check_result"
+      feasible:
+        $ref: "#/$defs/check_result"
+      traceable:
+        $ref: "#/$defs/check_result"
+      prioritized:
+        $ref: "#/$defs/check_result"
+  issue:
+    type: object
+    additionalProperties: false
+    required: [check, message]
+    properties:
+      check:
+        enum:
+          - unambiguous
+          - testable
+          - complete
+          - consistent
+          - feasible
+          - traceable
+          - prioritized
+      severity:
+        enum: [blocking, warning]
+      message:
+        type: string
+        minLength: 1
+      rule_id:
+        type: string
+      location:
+        type: string
+      fix:
+        type: string

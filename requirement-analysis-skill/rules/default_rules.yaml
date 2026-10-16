@@ -1,0 +1,106 @@
+version: 1
+
+defaults:
+  - id: DEF-001
+    dimension: [priority]
+    value: should
+    reason: 未说明优先级时按 MoSCoW 取中间档，避免过度承诺
+    review_trigger: 需求评审时若被确认是本次交付不可缺的一环，升级为 must
+
+  - id: DEF-002
+    dimension: [exception]
+    applies_to: 写操作
+    value: 提示失败并保留用户已输入内容，允许重试
+    reason: 写操作若无异常处理，失败会导致数据处于未知状态
+    review_trigger: 涉及资金、库存、外部扣减时，需确认幂等与补偿策略
+
+  - id: DEF-003
+    dimension: [exception]
+    applies_to: 网络请求失败
+    value: 提示网络异常，提供重试入口，不自动无限重试
+    reason: 自动无限重试会放大故障，交给用户决定更可控
+    review_trigger: 引入消息队列或后台任务后需重新确认重试语义
+
+  - id: DEF-004
+    dimension: [exception]
+    applies_to: 关键失败
+    value: 记录结构化日志，含 requirement_id、actor、失败原因
+    reason: 无日志的失败无法定位，属于不可观测状态
+    review_trigger: 接入集中式日志或监控后复核字段口径
+
+  - id: DEF-005
+    dimension: [permission]
+    value: 默认仅数据创建者本人可读写，其他角色一律拒绝
+    reason: 最小权限原则，宁可后续放开也不默认放开
+    review_trigger: 出现共享、协作、审核类场景时重新确认
+
+  - id: DEF-006
+    dimension: [exception]
+    applies_to: 越权访问
+    value: 返回统一拒绝结果，不透露资源是否存在
+    reason: 区分「不存在」与「无权限」会形成资源探测面
+    review_trigger: 需要向用户解释差异时单独评审
+
+  - id: DEF-007
+    dimension: [data]
+    applies_to: 空数据
+    value: 展示空状态并给出下一步引导，不显示空白区域
+    reason: 空状态不明确会被当成 bug
+    review_trigger: 设计稿给出空状态样式后以设计稿为准
+
+  - id: DEF-008
+    dimension: [non_functional]
+    applies_to: 写操作幂等
+    value: 写操作默认考虑幂等，重复提交不产生第二条记录
+    reason: 网络重试与用户连点会天然触发重复提交
+    review_trigger: 依赖外部系统时需确认对方是否提供幂等键
+
+  - id: DEF-009
+    dimension: [non_functional]
+    applies_to: 响应时延
+    value: 用户操作类接口 < 500ms，列表分页查询 < 1s（P95，本地网络）
+    reason: 无量化指标的非功能需求无法验收
+    review_trigger: 上线后按真实流量复核 P95
+
+  - id: DEF-010
+    dimension: [acceptance]
+    applies_to: 边界值
+    value: 默认覆盖空值、重复值、最大长度/最大数量三类边界
+    reason: 边界是最密集的缺陷来源，成本低收益高
+    review_trigger: 字段含义变化后重新定义边界
+
+  - id: DEF-011
+    dimension: [interface]
+    value: 未说明接口时默认不新增外部接口，只描述内部行为
+    reason: 过早固定接口形状会锁死实现；必要时由建模阶段显式提出
+    review_trigger: 需要被外部系统调用时，按 part_of 补充接口需求
+
+  - id: DEF-012
+    dimension: [dependency]
+    value: 默认为空依赖，发现依赖时补入 dependencies
+    reason: 隐性依赖会让排期失真
+    review_trigger: 每次需求变更时重新扫描依赖
+
+  - id: DEF-013
+    dimension: [glossary]
+    value: 默认复用已有术语；无法复用时才新增并写入 glossary
+    reason: 同一概念多个叫法是需求返工的主要来源
+    review_trigger: 出现同义词时合并
+
+  - id: DEF-014
+    dimension: [trace]
+    value: 以本次输入来源（对话日期 / Issue 号 / 文件名）作为 source
+    reason: 无来源的需求在变更时无法判断原意
+    review_trigger: 若找不到任何来源，写成 unknown 并显式提醒用户
+
+  - id: DEF-015
+    dimension: [test_notes]
+    value: 不适用的标准场景必须写明「不适用 + 原因」，不允许留空
+    reason: 留空和「确认过不需要」是两种状态，不能被混为一谈
+    review_trigger: 需求范围变化时重新逐条核对
+
+usage:
+  - 应用默认值时必须在覆盖矩阵里记录 rule_id、reason、review_trigger
+  - P0 维度不得用默认值填充（见 COV-001）
+  - 用户在澄清中被问到时，用户答案优先于任何默认值
+  - 用户未响应超时或未授权追问时，直接执行下列 else：遵循本文件推荐值并在 open_questions 中留痕

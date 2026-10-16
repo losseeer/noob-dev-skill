@@ -1,0 +1,155 @@
+version: 1
+as_of: 2026-10-15
+coverage:
+  - dimension: users
+    priority: P0
+    status: explicit
+    value: [public, independent_developers]
+    evidence:
+      - source: input.md
+        excerpt: "给独立开发者使用的在线发布检查清单"
+  - dimension: charging
+    priority: P0
+    status: explicit
+    value: true
+    evidence:
+      - source: input.md
+        excerpt: "计划每月 ¥19 订阅"
+  - dimension: data
+    priority: P0
+    status: explicit
+    value: per_account_checklists
+    evidence:
+      - source: input.md
+        excerpt: "每个账号保存自己的清单"
+  - dimension: data_sensitivity
+    priority: P0
+    status: inferred
+    value: personal
+    evidence:
+      - source: input.md
+        excerpt: "邮箱登录"
+    reason: "邮箱属于个人信息，但没有敏感或受监管数据证据。"
+    confidence: 0.9
+  - dimension: compliance
+    priority: P0
+    status: explicit
+    value: medium
+    evidence:
+      - source: questionnaire
+        excerpt: "面向公开用户并处理邮箱，需要基础隐私合规"
+  - dimension: criticality
+    priority: P0
+    status: explicit
+    value: medium
+    evidence:
+      - source: input.md
+        excerpt: "可以偶尔停机，但不能静默丢数据"
+  - dimension: scale
+    priority: P1
+    status: explicit
+    value: 200
+    evidence:
+      - source: input.md
+        excerpt: "约 200 个活跃用户"
+  - dimension: delivery
+    priority: P1
+    status: explicit
+    value: cloud
+    evidence:
+      - source: input.md
+        excerpt: "在线"
+  - dimension: enterprise
+    priority: P1
+    status: explicit
+    value: false
+    evidence:
+      - source: input.md
+        excerpt: "暂时不做企业 SSO、私有化部署和团队权限"
+  - dimension: maintenance
+    priority: P2
+    status: explicit
+    value: "<=5h/week"
+    evidence:
+      - source: input.md
+        excerpt: "每周预算约 5 小时"
+  - dimension: stage
+    priority: P1
+    status: inferred
+    value: mvp
+    evidence:
+      - source: input.md
+        excerpt: "先支持约 200 个活跃用户"
+    reason: "输入定义了首期用户规模和明确的不做项。"
+    confidence: 0.9
+  - dimension: form
+    priority: P2
+    status: explicit
+    value: web_saas
+    evidence:
+      - source: input.md
+        excerpt: "在线发布检查清单"
+  - dimension: regulation
+    priority: P0
+    status: explicit
+    value: privacy_baseline
+    evidence:
+      - source: questionnaire
+        excerpt: "只涉及公开用户邮箱和账号数据，不处理受监管行业数据"
+  - dimension: downtime
+    priority: P1
+    status: explicit
+    value: occasional_allowed
+    evidence:
+      - source: input.md
+        excerpt: "可以偶尔停机"
+  - dimension: data_loss
+    priority: P1
+    status: explicit
+    value: unacceptable_silent_loss
+    evidence:
+      - source: input.md
+        excerpt: "不能静默丢数据"
+  - dimension: contractual_obligation
+    priority: P1
+    status: explicit
+    value: false
+    evidence:
+      - source: questionnaire
+        excerpt: "首期没有企业合同或 SLA"
+  - dimension: audit_required
+    priority: P1
+    status: explicit
+    value: false
+    evidence:
+      - source: questionnaire
+        excerpt: "首期不要求审计日志"
+  - dimension: auth
+    priority: P1
+    status: explicit
+    value: email_login
+    evidence:
+      - source: input.md
+        excerpt: "用户用邮箱登录"
+  - dimension: budget
+    priority: P2
+    status: explicit
+    value: "<=500 CNY/month"
+    evidence:
+      - source: questionnaire
+        excerpt: "首期云资源预算每月不超过 ¥500"
+questions: []
+skipped:
+  - dimension: experience
+    reason: "当前方案由单人维护预算和托管服务约束，不单独限制开发经验。"
+defaults_applied:
+  - dimension: rewrite
+    value: avoid
+    rule_id: D-P2-REWRITE
+    reason: "首期没有重写既有系统的需求。"
+    review_trigger: "关键约束无法通过兼容演进满足。"
+  - dimension: i18n
+    value: false
+    rule_id: D-P2-I18N
+    reason: "没有第二语言市场证据。"
+    review_trigger: "出现明确的第二语言付费用户。"

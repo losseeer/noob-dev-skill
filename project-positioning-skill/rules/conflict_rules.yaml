@@ -1,0 +1,79 @@
+version: 1
+condition_language:
+  operators: [eq, in, contains, gte]
+conflicts:
+  - id: C-SELF-PAID
+    when:
+      all:
+        - field: users
+          operator: contains
+          value: self
+        - field: charging
+          operator: eq
+          value: true
+    severity: blocking
+    dimensions: [users, charging]
+    message: "当前描述同时表示只给自己使用和对用户收费。请确认是否计划对外提供。"
+  - id: C-SELF-MULTIUSER
+    when:
+      all:
+        - field: users
+          operator: contains
+          value: self
+        - field: scale
+          operator: gte
+          value: 2
+    severity: blocking
+    dimensions: [users, scale]
+    message: "当前描述同时表示只给自己使用和多人使用。请确认真实用户范围。"
+  - id: C-LOW-CRITICALITY-HIGH-COMPLIANCE
+    when:
+      all:
+        - field: criticality
+          operator: in
+          value: [none, low]
+        - field: compliance
+          operator: eq
+          value: high
+    severity: blocking
+    dimensions: [criticality, compliance]
+    message: "业务影响被描述为低，但合规要求为高。请确认监管来源及失败后果。"
+  - id: C-SINGLE-HA
+    when:
+      all:
+        - field: scale
+          operator: eq
+          value: 1
+        - field: downtime
+          operator: in
+          value: [near_zero, high_availability_required]
+    severity: warning
+    dimensions: [scale, downtime]
+    message: "单用户场景要求高可用，可能过度设计。请确认不可接受停机的具体后果。"
+  - id: C-LOCAL-PUBLIC
+    when:
+      all:
+        - field: delivery
+          operator: eq
+          value: local
+        - field: users
+          operator: contains
+          value: public
+    severity: blocking
+    dimensions: [delivery, users]
+    message: "本地交付与公开用户范围不一致。请确认是桌面分发、自托管还是云服务。"
+  - id: C-NO-AUTH-SENSITIVE
+    when:
+      all:
+        - field: auth
+          operator: eq
+          value: none
+        - field: data_sensitivity
+          operator: in
+          value: [sensitive, regulated]
+    severity: blocking
+    dimensions: [data_sensitivity, compliance]
+    message: "敏感或受监管数据不能直接采用无认证默认值。请确认访问边界。"
+resolution:
+  blocking: "加入 P0 待问清单；解决前禁止生成定位卡。"
+  warning: "加入待确认清单；仅在用户接受风险并记录理由后继续。"

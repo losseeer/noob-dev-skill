@@ -1,0 +1,70 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://example.local/requirement-analysis/positioning_candidate.schema.yaml"
+title: Positioning change candidates
+description: >-
+  需求分析 Skill 与项目定位 Skill 之间唯一的可选输出。
+  本文件只记录候选，不做决策；范围门禁由项目定位 Skill 负责。
+type: object
+additionalProperties: false
+required:
+  - version
+  - as_of
+  - decision_owner
+  - candidates
+properties:
+  version:
+    const: 1
+  as_of:
+    type: string
+    pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+  decision_owner:
+    const: project-positioning-skill
+  positioning_context:
+    enum: [read, not_found, skipped]
+  note:
+    type: string
+  candidates:
+    type: array
+    items:
+      $ref: "#/$defs/candidate"
+$defs:
+  candidate:
+    type: object
+    additionalProperties: false
+    required: [id, source_requirement, candidate, reason, action]
+    properties:
+      id:
+        type: string
+        pattern: "^POS-CAND-[0-9]{3}$"
+      source_requirement:
+        type: string
+        pattern: "^REQ-[0-9]{3}$"
+      candidate:
+        type: string
+        minLength: 1
+      signal:
+        enum:
+          - payment
+          - subscription
+          - billing
+          - multi_tenant
+          - compliance
+          - sla
+          - audit
+          - scale
+          - regulation
+          - external_integration
+          - other
+      reason:
+        type: string
+        minLength: 1
+      evidence:
+        type: array
+        items:
+          type: string
+      severity:
+        enum: [info, review_recommended]
+      action:
+        const: 建议交给项目定位 Skill 做范围门禁
+      status:
+        enum: [open, submitted, resolved_discarded, resolved_repositioned]

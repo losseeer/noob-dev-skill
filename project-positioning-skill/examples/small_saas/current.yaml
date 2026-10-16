@@ -1,0 +1,73 @@
+version: v0.1
+status: reviewed
+updated: 2026-10-15
+summary: "面向独立开发者的小规模在线发布检查清单订阅服务"
+positioning:
+  type: small_public_saas
+  level: L2
+  stage: mvp
+  users: [public, independent_developers]
+  scale: 200
+  delivery: cloud
+  charging: true
+  criticality: medium
+  compliance: medium
+  data_sensitivity: personal
+non_functional_priority: [data_safety, maintainability, security, cost, availability]
+constraints:
+  architecture: modular_monolith
+  database: managed_postgresql
+  deploy: single_region_cloud
+  auth: email_login
+  multi_tenant: true
+  audit: false
+  backup: daily_automated_and_restore_tested
+  testing: core_path_integration
+  monitoring: metrics_logs_alerts_and_visible_errors
+  maintenance_budget: "<=5h/week"
+do_now:
+  - item: 账号登录与数据隔离
+    reason: "公开多用户服务的基础边界。"
+  - item: 发布检查清单核心流程
+    reason: "直接交付产品价值。"
+  - item: 订阅状态与失败可见
+    reason: "收费服务不能静默丢失支付或授权状态。"
+do_not:
+  - item: 企业 SSO
+    reason: "当前目标用户是独立开发者，没有企业身份集成证据。"
+    upgrade_trigger: "出现愿意签约的企业客户并明确要求 SSO。"
+  - item: 私有化部署
+    reason: "单人维护预算无法支持多套客户环境。"
+    upgrade_trigger: "私有化收入覆盖独立部署与升级成本。"
+  - item: 团队角色权限
+    reason: "当前数据空间按个人账号隔离。"
+    upgrade_trigger: "出现团队共享清单的付费需求。"
+reserved:
+  - item: 身份提供方扩展
+    boundary: "认证层与业务用户模型分离"
+    trigger: "需要接入第二种登录方式。"
+undecided: []
+reposition_triggers:
+  - id: RT-001
+    condition: "出现企业合同、SSO、审计或私有化部署要求。"
+    action: reposition_review
+  - id: RT-002
+    condition: "活跃用户超过 1000 或维护投入连续两周超过 5 小时。"
+    action: reposition_review
+  - id: RT-003
+    condition: "开始处理敏感或受监管数据。"
+    action: reposition_review
+source_summary:
+  - dimension: users
+    status: explicit
+    source: "input.md：给独立开发者使用"
+  - dimension: charging
+    status: explicit
+    source: "input.md：每月 ¥19 订阅"
+  - dimension: data_sensitivity
+    status: inferred
+    source: "邮箱登录涉及个人信息"
+history:
+  - date: 2026-10-15
+    version: v0.1
+    change: "首次定位并完成 review。"

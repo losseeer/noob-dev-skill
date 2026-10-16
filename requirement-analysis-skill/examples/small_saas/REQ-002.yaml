@@ -1,0 +1,161 @@
+id: REQ-002
+title: 通过邀请链接加入空间
+version: v0.1
+status: draft
+type: functional
+priority: should
+user_story: 作为空间管理员，我要生成一条链接发给同事、让对方免注册就能加入，以便拉人时不用来回发账号；同时我要看到谁什么时候加入的，方便清理。
+
+actors:
+  - 空间管理员
+  - 被邀请者
+  - 未受邀请的访问者
+
+goal: 降低拉人进空间的摩擦，同时保留成员来源可追溯
+value: 省去给每个同事手动开账号的成本
+source: 用户反馈 2026-10-08（Slack）
+
+preconditions:
+  - 操作者已是该空间管理员
+  - 空间处于启用状态
+
+triggers:
+  - 空间管理员在成员页点击「生成邀请链接」
+  - 被邀请者打开邀请链接
+
+main_flow:
+  - 管理员生成邀请链接
+  - 被邀请者打开链接并填写邮箱
+  - 系统校验令牌有效性与剩余使用次数
+  - 系统向该邮箱发送验证码，被邀请者回填验证码
+  - 校验通过后建立成员关系
+  - 成员页新增一条成员记录，显示邮箱与加入时间
+
+alternate_flows:
+  - name: 达到使用上限
+    when: 该令牌已使用次数达到管理员设置的上限
+    steps:
+      - 展示「名额已满，请联系管理员」提示
+      - 不进入邮箱填写流程
+
+exception_flows:
+  - name: 网络失败
+    when: 提交邮箱或验证码时请求失败
+    steps:
+      - 展示「网络异常，重试」提示
+      - 保留已填写的邮箱内容
+      - 记录结构化日志，含 requirement_id、invite_token 前缀、失败原因
+  - name: 验证码错误
+    when: 验证码不正确或已过期
+    steps:
+      - 展示「验证码不正确，请重新输入」
+      - 允许重新获取验证码
+
+data:
+  inputs:
+    - space_id
+    - invite_token
+    - invitee_email
+    - verification_code
+  outputs:
+    - membership_id
+    - joined_at
+  entities:
+    - Invite
+    - Membership
+  retention: Invite 记录保留至令牌失效后 90 天；Membership 保留至管理员移除成员
+
+permission:
+  - 仅空间管理员可生成、查看、撤销邀请链接
+  - 非管理员访问成员管理页返回无权限提示，不透露成员列表是否存在
+
+non_functional:
+  - 加入动作应尽快生效
+  - 同一令牌并发使用时只允许一人成功
+
+acceptance_criteria:
+  - id: AC-001
+    scenario: happy_path
+    requirement_id: REQ-002
+    given: 管理员已生成一条有效邀请链接，且未达使用上限
+    when: 被邀请者打开链接并完成邮箱+验证码确认
+    then:
+      - 该邮箱成为该空间成员
+      - 成员页出现该成员记录，含邮箱与加入时间
+      - 令牌已使用次数 +1
+  - id: AC-002
+    scenario: boundary
+    requirement_id: REQ-002
+    given: 该令牌已达到使用上限
+    when: 新的访问者打开同一链接
+    then: 展示「名额已满，请联系管理员」提示，不进入邮箱填写流程
+  - id: AC-003
+    scenario: permission_denied
+    requirement_id: REQ-002
+    given: 普通成员（非管理员）登录系统
+    when: 访问成员管理页的邀请链接入口
+    then: 展示无权限提示，页面不含任何邀请链接数据
+  - id: AC-004
+    scenario: duplicate
+    requirement_id: REQ-002
+    given: 该邮箱已是该空间成员
+    when: 再次通过同一链接提交相同的邮箱
+    then: 提示已是成员，不重复创建 Membership 记录
+  - id: AC-005
+    scenario: network_failure
+    requirement_id: REQ-002
+    given: 提交验证码时网络请求失败
+    when: 被邀请者点击确认且请求失败
+    then:
+      - 展示「网络异常，重试」提示
+      - 已填邮箱保留在输入框中
+      - 日志记录一条含 failure_reason 的结构化条目
+  - id: AC-006
+    scenario: empty_data
+    requirement_id: REQ-002
+    given: 该空间尚无任何成员通过邀请加入
+    when: 管理员打开成员页
+    then: 展示空状态文案与「生成邀请链接」引导按钮
+
+out_of_scope:
+  - 邀请链接的自定义有效期 UI
+  - 邮件模板自定义
+  - 批量导入成员
+
+dependencies:
+  - 现有用户体系
+  - 现有空间成员关系
+
+assumptions:
+  - 冲突消解采用「邮箱+验证码」的免密加入，取代完全免注册（依据 CON-002 / CON-007 推荐值）
+  - 令牌默认带使用上限，管理员可手动撤销
+
+open_questions:
+  - 是否接受「链接不再永久有效」；当前按限次 + 可撤销处理（undecided）
+  - 「尽快生效」的量化目标未确认，暂未写入 non_functional
+
+risks:
+  - description: 邀请链接转发到公开渠道导致空间被陌生人加入
+    level: high
+    mitigation: 令牌限次 + 管理员可撤销 + 验证码二次确认
+    probe: 手工验证一次链接转发后的加入行为
+
+test_notes:
+  - 并发场景需覆盖：同一令牌被多人同时使用
+  - boundary 场景需覆盖：令牌已撤销、令牌已过期、已达使用上限
+
+glossary:
+  - term: 邀请链接
+    definition: 由空间管理员生成、携带 invite_token 的一次性或限次 URL
+  - term: 加入
+    definition: 被邀请者通过邀请链接成功建立空间成员关系
+
+trace:
+  source: 用户反馈 2026-10-08
+  source_type: user_feedback
+  related: []
+  realization: []
+
+updated_at: 2026-10-08
+history:
+  - v0.1

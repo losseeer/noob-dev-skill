@@ -1,0 +1,23 @@
+requirement: "开放公众注册，让供应商自行提交采购资料"
+assessed_at: 2026-10-15
+current_positioning_version: v0.1
+positioning_status: reviewed
+current_level: L3
+matched_rules:
+  - rule_id: G-002-UNRESOLVED-RISK
+    evidence: "需求尚未明确外部供应商身份验证、数据授权和隐私责任"
+  - rule_id: G-010-DO-NOT
+    evidence: "current.yaml#do_not[0] 明确排除公众注册"
+  - rule_id: G-020-REPOSITION
+    evidence: "current.yaml#reposition_triggers[0] 在向外部主体开放时要求重定位"
+in_do_not: true
+trigger_reposition: true
+risk_state: unresolved
+prohibited_even_after_reposition: false
+exceeds_hard_budget: false
+core_path: false
+fits_scope: false
+decision: reject
+reason: "公众访问会改变身份边界、攻击面和隐私义务；当前缺少外部身份验证与数据授权证据，不能直接进入实现。"
+upgrade_trigger: "公司正式批准外部供应商访问，补齐身份、数据保留、安全和合规证据，并完成重定位。"
+action: "停止实现；先补齐风险证据，再执行重定位并确定供应商身份验证与数据边界。"

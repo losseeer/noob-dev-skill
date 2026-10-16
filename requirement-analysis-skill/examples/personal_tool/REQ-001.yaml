@@ -1,0 +1,170 @@
+id: REQ-001
+title: 收藏文章
+version: v0.1
+status: reviewed
+type: functional
+priority: must
+user_story: 作为文章阅读者，我要能把文章存下来留着以后再看，并且只有我自己知道这件事，以便快速回到感兴趣的内容。
+
+actors:
+  - 文章阅读者（已登录）
+  - 未登录访客
+
+goal: 读者能把文章私密地保存下来，供以后继续阅读
+value: 省去以后重新搜索文章的成本，且不暴露自己的阅读偏好
+source: 用户反馈 2026-10-01（微信交流）
+
+preconditions:
+  - 读者处于文章详情页
+  - 该文章存在且处于已发布状态
+
+triggers:
+  - 在文章详情页点击星星（收藏）按钮
+
+main_flow:
+  - 点击收藏按钮
+  - 系统写入一条 Favorite 记录（reader_id + article_id）
+  - 按钮切换为已收藏样式
+  - 展示成功提示
+  - 本次收藏出现在读者本人的稍后阅读列表中
+
+alternate_flows:
+  - name: 取消收藏
+    when: 读者已收藏该文章时再次点击按钮
+    steps:
+      - 删除对应 Favorite 记录
+      - 按钮恢复为未收藏样式
+      - 展示已取消提示
+
+exception_flows:
+  - name: 网络失败
+    when: 写入 Favorite 记录时请求失败
+    steps:
+      - 展示「网络异常，重试」提示
+      - 按钮保持点击前状态，不误导为已收藏
+      - 记录结构化日志，含 requirement_id、reader_id、失败原因
+  - name: 未登录
+    when: 未登录访客点击收藏按钮
+    steps:
+      - 展示「收藏需要先登录」提示
+      - 不写入任何 Favorite 记录
+
+data:
+  inputs:
+    - article_id
+    - reader_id
+  outputs:
+    - favorite_id
+    - created_at
+  entities:
+    - Favorite
+  retention: 长期保留，除非读者主动取消收藏
+
+permission:
+  - 仅 Favorite 记录的创建者本人可读写
+  - 其他人对他人收藏数据的查询一律返回「无数据」，不透露资源是否存在
+  - 未登录访客无写入权限
+
+non_functional:
+  - 收藏与取消收藏接口 P95 < 500ms（本地网络，单次请求）
+  - 同一读者对同一文章重复收藏不产生第二条记录
+
+acceptance_criteria:
+  - id: AC-001
+    scenario: happy_path
+    requirement_id: REQ-001
+    given: 读者已登录，处于某篇未收藏文章的详情页
+    when: 点击收藏按钮
+    then:
+      - 按钮变为已收藏样式
+      - 展示成功提示
+      - 刷新页面后按钮仍为已收藏样式
+  - id: AC-002
+    scenario: duplicate
+    requirement_id: REQ-001
+    given: 读者已收藏该文章
+    when: 再次点击收藏按钮所在的同一位置
+    then: 取消收藏，按钮恢复未收藏样式，Favorite 表中不存在该记录
+  - id: AC-003
+    scenario: permission_denied
+    requirement_id: REQ-001
+    given: 读者 B 请求查看读者 A 的收藏列表
+    when: 发起收藏列表查询
+    then: 返回空列表，响应体不含读者 A 的任何收藏字段
+  - id: AC-004
+    scenario: unauthenticated
+    requirement_id: REQ-001
+    given: 未登录访客处于文章详情页
+    when: 点击收藏按钮
+    then: 展示「收藏需要先登录」提示，Favorite 表新增记录数为 0
+  - id: AC-005
+    scenario: network_failure
+    requirement_id: REQ-001
+    given: 收藏写入请求返回网络错误
+    when: 读者点击收藏按钮后请求失败
+    then:
+      - 展示「网络异常，重试」提示
+      - 按钮保持未收藏样式
+      - 日志记录一条含 failure_reason 的结构化条目
+  - id: AC-006
+    scenario: idempotency
+    requirement_id: REQ-001
+    given: 读者已成功收藏该文章
+    when: 在 3 秒内重复点击收藏按钮 5 次
+    then: Favorite 表中该 reader_id 与 article_id 组合仅有 1 条记录
+  - id: AC-007
+    scenario: empty_data
+    requirement_id: REQ-001
+    given: 该读者从未收藏过任何文章
+    when: 打开稍后阅读列表
+    then: 展示空状态文案与「去逛逛」引导按钮，不显示空白区域
+  - id: AC-008
+    scenario: boundary
+    requirement_id: REQ-001
+    given: 文章已被删除但读者的收藏记录仍然存在
+    when: 打开稍后阅读列表
+    then: 该条目展示为「文章已不可读」并可从列表中移除，不报错
+
+out_of_scope:
+  - 收藏分组与标签
+  - 收藏夹排序与搜索
+  - 离线收藏
+
+dependencies: []
+
+assumptions:
+  - reader_id 来自现有登录态，本需求不引入新的身份体系
+  - 收藏按钮的设计样式沿用现有文章详情页组件
+
+open_questions:
+  - 是否需要「取消收藏」的二次确认；当前按无确认处理（undecided，按 DEF-001 推荐值）
+
+risks:
+  - description: 收藏数据未按 reader_id 隔离，导致他人可见
+    level: high
+    mitigation: 查询层强制带 reader_id 过滤条件，AC-003 覆盖
+    probe: 已有的权限回归用例
+  - description: 收藏写入未落库导致刷新丢失
+    level: high
+    mitigation: AC-001 明确要求刷新后状态保留
+    probe: 手工验证一次收藏后强刷
+
+test_notes:
+  - concurrency 场景不适用：单人博客场景不存在并发写同一收藏记录的实际风险
+  - idempotency 场景按 DEF-008 处理，见 AC-006
+
+glossary:
+  - term: 收藏
+    definition: 读者把文章加入个人稍后阅读列表的动作，仅本人可见
+  - term: Favorite
+    definition: 一条收藏记录，关联 reader_id 与 article_id
+
+trace:
+  source: 用户反馈 2026-10-01
+  source_type: user_feedback
+  related: []
+  realization: []
+
+updated_at: 2026-10-01
+history:
+  - v0.1

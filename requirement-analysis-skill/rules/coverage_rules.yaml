@@ -1,0 +1,153 @@
+version: 1
+
+priorities:
+  P0:
+    dimensions: [actor, goal, trigger, main_flow, acceptance, data, exception, permission]
+    meaning: 缺了就无法判断要做什么、为谁做、怎么算完成
+  P1:
+    dimensions: [preconditions, alternate_flow, non_functional, interface, dependency]
+    meaning: 缺了可以先用默认值开发，但必须回头复核
+  P2:
+    dimensions: [glossary, trace, risk, test_notes]
+    meaning: 直接给默认值，不打扰用户
+
+handling:
+  P0_missing: ask
+  P0_conflict: ask
+  P0_low_confidence: ask_one
+  P0_undecided: default_and_record
+  P0_explicit: skip
+  P0_inferred: skip_with_source
+  P1_missing: default_and_record
+  P1_conflict: ask
+  P1_low_confidence: ask_one
+  P1_undecided: default_and_record
+  P1_explicit: skip
+  P1_inferred: skip_with_source
+  P2_missing: default
+  P2_conflict: ask
+  P2_low_confidence: record_assumption
+  P2_undecided: default
+  P2_explicit: skip
+  P2_inferred: skip_with_source
+
+rules:
+  - id: COV-001
+    name: no_default_for_p0_missing
+    text: P0 维度 missing 时必须询问，禁止用默认值填充。
+    action: ask
+  - id: COV-002
+    name: conflict_is_blocking
+    text: 任何优先级的 conflict 都必须询问并给出冲突证据原文，禁止取一边默认忽略另一边。
+    action: ask
+  - id: COV-003
+    name: inferred_needs_source_and_reason
+    text: inferred 必须同时记录 source 与 reason，置信度 < 0.6 降级为 low_confidence 处理。
+    action: record
+  - id: COV-004
+    name: undecided_needs_review_trigger
+    text: undecided 必须给出默认值与触发复审的条件，条件须可观测（不能是「以后再说」）。
+    action: default_and_record
+  - id: COV-005
+    name: default_needs_rule_id
+    text: 每个应用的默认值必须引用 default_rules.yaml 里的 rule_id，便于追溯。
+    action: record
+  - id: COV-006
+    name: no_repeat_questions
+    text: 已经 explicit、可靠 inferred、或用户已接受的默认值，不再提问。用户自由回答覆盖预设选项。
+    action: skip
+
+dimensions:
+  actor:
+    priority: P0
+    question_when_missing: 这个功能是谁在用？会出现几种不同的人？
+    ok_when: 列出全部会触发该需求的人或角色，含未登录 / 管理员等边界角色
+    hints: [用户, 管理员, 游客, 运营, 第三方系统, 定时任务]
+  goal:
+    priority: P0
+    question_when_missing: 他用这个功能是为了解决什么问题？做成了对他有什么好处？
+    ok_when: 说清「为了什么」，而不是只说「做了什么」
+    hints: [为了, 这样可以, 省得, 方便, 目的是]
+  trigger:
+    priority: P0
+    question_when_missing: 什么情况下这件事会被触发？人点按钮，还是系统自己跑？
+    ok_when: 至少一个明确的触发条件，自动触发须给出频率或事件
+    hints: [点击, 提交, 每天, 当…时, webhook, 定时]
+  main_flow:
+    priority: P0
+    question_when_missing: 顺利的情况下，从头到尾会发生哪些步骤？
+    ok_when: 有序且每步都能被验证发生了没有
+    hints: [先, 然后, 接着, 最后]
+  acceptance:
+    priority: P0
+    question_when_missing: 做到什么程度你就算它完成了？怎么验证？
+    ok_when: Given / When / Then 三要素齐全且可执行
+    hints: [算完成, 验收, 通过的标准是]
+  data:
+    priority: P0
+    question_when_missing: 这个功能要吃进去什么信息、吐出来什么信息？要不要存下来？
+    ok_when: 输入、输出、持久化实体都已命名
+    hints: [字段, id, 记录, 表, 存]
+  exception:
+    priority: P0
+    question_when_missing: 哪些地方会失败？失败了用户看到什么、还能不能重试？
+    ok_when: 至少覆盖网络失败、数据校验失败两类，并给出用户可见结果
+    hints: [失败, 报错, 超时, 重试, 没有权限时]
+  permission:
+    priority: P0
+    question_when_missing: 谁能做这件事？谁能看到结果？有没有人是被挡住的？
+    ok_when: 明确可操作角色与被拒绝时的表现
+    hints: [只有, 权限, 本人, 管理员才能]
+
+  preconditions:
+    priority: P1
+    question_when_missing: 开始前，系统得处于什么状态？
+    ok_when: 前置状态可被检查
+    hints: [必须先, 在…前提下, 已登录]
+  alternate_flow:
+    priority: P1
+    question_when_missing: 有没有不走常规路径的情况？
+    ok_when: 每个分支都有出口
+    hints: [如果…则, 否则, 另一种情况]
+  non_functional:
+    priority: P1
+    question_when_missing: 有没有速度、数量、并发、兼容性方面的要求？
+    ok_when: 指标可量化（数字 + 单位 + 条件）
+    hints: [毫秒, 秒, 并发, 支持多少, 兼容]
+  interface:
+    priority: P1
+    question_when_missing: 这个功能需要和别的系统打交道吗？
+    ok_when: 有明确的调用方向、方法与载荷
+    hints: [API, 接口, webhook, 第三方, 回调]
+  dependency:
+    priority: P1
+    question_when_missing: 它依赖哪些已经有的东西或必须先建好的东西？
+    ok_when: 依赖项可指向另一个 REQ 或已有设施
+    hints: [依赖, 前提, 需要先把, 复用]
+
+  glossary:
+    priority: P2
+    question_when_missing: 有没有只有你们才懂的说法需要先对齐？
+    ok_when: 术语有定义
+    hints: [这个叫, 内部叫, 简称]
+  trace:
+    priority: P2
+    question_when_missing: 这个需求是从哪儿来的？
+    ok_when: 有来源标识（Issue 号、反馈日期、聊天记录片段）
+    hints: [来源, 反馈, issue, ticket]
+  risk:
+    priority: P2
+    question_when_missing: 有没有你觉得可能做不成或要小心的地方？
+    ok_when: 风险有对应的缓解动作或探针任务
+    hints: [风险, 担心, 不确定, 怕]
+  test_notes:
+    priority: P2
+    question_when_missing: 有哪些特殊的测试场景需要考虑？不适用的标准场景请注明原因。
+    ok_when: 说明哪些标准场景不适用及其原因
+    hints: [测试, 用例, 边界]
+
+exit_criteria:
+  - 没有任一需求的 P0 维度处于 missing
+  - 没有 conflict
+  - 每个 undecided 都有默认值与 review_trigger
+  - 每个应用的默认值都能追溯到 rule_id

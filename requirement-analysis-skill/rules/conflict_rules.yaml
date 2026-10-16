@@ -1,0 +1,120 @@
+version: 1
+
+severity:
+  blocking: 必须解决后才能生成需求卡
+  warning: 记录到 open_questions，不阻塞
+
+conflicts:
+  - id: CON-001
+    pair: [readonly_claim, write_acceptance]
+    detect: 需求正文声称只读/只展示，但验收标准或主流程出现创建、修改、删除动作
+    message: 需求声称只读，但验收要求写入，请确认到底是哪一种。
+    severity: blocking
+    resolution: 推荐按「读」优先确认；若确实需要写入，把写操作拆成独立子需求 REQ。
+    options:
+      - label: 确实是只读，写入部分删掉
+      - label: 确实要写，拆成两个需求（推荐）
+      - label: 都要，但写操作放到下一期
+
+  - id: CON-002
+    pair: [no_auth, personalization]
+    detect: 声称无需登录，但要求「我的收藏」「历史记录」「个性化推荐」这类依赖身份的内容
+    message: 未登录却要求个性化，请确认如何识别用户。
+    severity: blocking
+    resolution: 推荐加登录；若坚持免登录，改用本地存储并明确换设备即丢失。
+    options:
+      - label: 加登录（推荐）
+      - label: 免登录，数据只存本机，换设备不保留
+      - label: 免登录，用匿名 ID，但换设备不保留
+
+  - id: CON-003
+    pair: [offline, realtime_sync]
+    detect: 同时出现离线可用与实时同步（秒级）要求
+    message: 离线与实时同步冲突，请确认优先级。
+    severity: blocking
+    resolution: 推荐「在线时实时、离线时排队并在恢复网络后同步」，并明确冲突时的取舍。
+    options:
+      - label: 在线实时 + 离线排队补同步（推荐）
+      - label: 只要离线可用，同步可以延迟到手动触发
+      - label: 只要实时同步，无网络时直接禁用功能
+
+  - id: CON-004
+    pair: [must, no_acceptance]
+    detect: priority 为 must 但 acceptance_criteria 为空
+    message: Must 需求缺少验收标准，不能进入开发。
+    severity: blocking
+    resolution: 推荐补齐 Given/When/Then 后再评审；无法补齐则降级为 should。
+    options:
+      - label: 现在补验收标准（推荐）
+      - label: 降级为 should 并记录到 open_questions
+      - label: 暂不成立这个需求，先讨论
+
+  - id: CON-005
+    pair: [no_interface, external_system]
+    detect: 声称没有外部接口，但流程中出现调用第三方、回调、导出等动作
+    message: 说明不与外部系统交互，但流程里存在外部调用，请确认。
+    severity: blocking
+    resolution: 推荐补一条 interface 需求并把超时、重试、失败语义写进异常流程。
+    options:
+      - label: 补接口需求并写清失败处理（推荐）
+      - label: 去掉外部调用
+
+  - id: CON-006
+    pair: [zero_cost_tolerance, best_effort]
+    detect: 同时要求「绝对不能出错/不能重复扣款」与「尽最大努力即可/不用管失败」
+    message: 准确性要求与容错要求互相矛盾，请确认失败时以哪个为准。
+    severity: blocking
+    resolution: 推荐按一致性优先，明确写幂等键与人工兜底入口。
+    options:
+      - label: 一致性优先：失败即阻断并告警（推荐）
+      - label: 可用性优先：允许短暂不一致，事后对账
+
+  - id: CON-007
+    pair: [all_users_anonymous, audit_required]
+    detect: 要求全匿名，同时要求操作留痕、可审计、可回溯
+    message: 匿名与审计追溯冲突，请确认如何取舍。
+    severity: blocking
+    resolution: 推荐「对外匿名、对内可追溯」，明确谁能看到追溯信息。
+    options:
+      - label: 对外匿名、对内可追溯，并限定查看者（推荐）
+      - label: 去标识化存储，保留必要审计字段
+
+  - id: CON-008
+    pair: [in_scope, out_of_scope]
+    detect: 同一事项既出现在需求正文，又出现在 out_of_scope
+    message: 同一件事既被包含又被排除，请确认。
+    severity: blocking
+    resolution: 推荐以 out_of_scope 为准（更保守），把正文里的部分删掉。
+    options:
+      - label: 以 out_of_scope 为准（推荐）
+      - label: 以正文为准，从 out_of_scope 里移除
+
+  - id: CON-009
+    pair: [instant_response, heavy_computation]
+    detect: 要求亚秒级响应，但流程内含批量计算、外部调用或复杂报表
+    message: 响应时间要求与处理量级冲突，请确认是同步还是异步。
+    severity: warning
+    resolution: 推荐改异步：先返回受理成功，完成后通知。
+    options:
+      - label: 改成异步 + 完成通知（推荐）
+      - label: 同步但放宽时间要求
+      - label: 预先计算并缓存
+
+  - id: CON-010
+    pair: [no_data_storage, history_required]
+    detect: 声称不存数据，但要求查看历史记录、报表或趋势
+    message: 不存数据与查看历史冲突，请确认存不存。
+    severity: blocking
+    resolution: 推荐存最小必要字段，并写清保留期限。
+    options:
+      - label: 存最小必要字段，写明保留期限（推荐）
+      - label: 不存，去掉历史/报表要求
+
+detection_order:
+  - 先跑 severity: blocking 的全部规则
+  - 每条命中规则必须在覆盖矩阵里产出 status: conflict，并附 ≥ 2 条证据
+  - conflict 未清零不得进入建模（见 COV-002）
+
+recommended_default:
+  用户未在澄清中给出选择时，执行每条规则的 resolution 里的推荐项，
+  并在 open_questions 里记录「按推荐处理，待用户确认」。

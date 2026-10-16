@@ -1,0 +1,102 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://example.local/requirement-analysis/requirement_set.schema.yaml"
+title: Requirement set index
+description: .project/requirements/current.yaml 的结构，作为需求集索引而不是需求本体。
+type: object
+additionalProperties: false
+required:
+  - version
+  - as_of
+  - positioning_context
+  - requirements
+properties:
+  version:
+    const: 1
+  as_of:
+    type: string
+    pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+  project:
+    type: string
+  positioning_context:
+    enum: [read, not_found, skipped]
+  positioning_ref:
+    type: string
+  positioning_fields_read:
+    type: array
+    items:
+      enum: [summary, constraints, glossary]
+  summary:
+    type: string
+  requirements:
+    type: array
+    items:
+      $ref: "#/$defs/requirement_ref"
+  open_questions:
+    type: array
+    items:
+      type: string
+  warnings:
+    type: array
+    items:
+      type: string
+  counts:
+    type: object
+    additionalProperties: false
+    properties:
+      total:
+        type: integer
+        minimum: 0
+      by_status:
+        type: object
+        additionalProperties:
+          type: integer
+          minimum: 0
+      by_priority:
+        type: object
+        additionalProperties:
+          type: integer
+          minimum: 0
+      gate_passed:
+        type: integer
+        minimum: 0
+      gate_pending:
+        type: integer
+        minimum: 0
+$defs:
+  requirement_ref:
+    type: object
+    additionalProperties: false
+    required: [id, title, version, status, priority, source, file]
+    properties:
+      id:
+        type: string
+        pattern: "^REQ-[0-9]{3}$"
+      title:
+        type: string
+        minLength: 1
+      version:
+        type: string
+        pattern: "^v[0-9]+\\.[0-9]+$"
+      status:
+        enum: [draft, reviewed, approved, implemented, changed, rejected]
+      priority:
+        enum: [must, should, could, wont]
+      source:
+        type: string
+        minLength: 1
+      file:
+        type: string
+        minLength: 1
+      gate:
+        enum: [pass, revise, reject, not_run]
+      parent:
+        type: string
+        pattern: "^REQ-[0-9]{3}$"
+      depends_on:
+        type: array
+        items:
+          type: string
+          pattern: "^REQ-[0-9]{3}$"
+      order:
+        type: integer
+        minimum: 1

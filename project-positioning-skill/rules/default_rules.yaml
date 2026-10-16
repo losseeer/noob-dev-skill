@@ -1,0 +1,128 @@
+version: 1
+policy:
+  precedence: "current_user_statement > existing_positioning > repository_fact > inference > user_accepted_default"
+  never_default_when_missing: [users, criticality, data, charging, compliance, scale, enterprise]
+  never_default_when_conflict: true
+  level_affecting_dimensions: [scale, enterprise, contractual_obligation, audit_required]
+  undecided_requires_user_awareness: true
+  record_fields: [rule_id, reason, review_trigger]
+defaults:
+  - id: D-P1-SCALE
+    dimension: scale
+    priority: P1
+    allowed_status: [undecided]
+    value: 1
+    reason: "用户尚未决定规模时，推荐从单用户约束开始；不得把完全缺失静默当成 1。"
+    review_trigger: "出现第二个真实用户或需要共享数据。"
+  - id: D-P1-DELIVERY
+    dimension: delivery
+    priority: P1
+    allowed_status: [missing, undecided]
+    value: local
+    reason: "本地交付减少部署和运维成本。"
+    review_trigger: "需要跨设备、远程访问或持续在线。"
+  - id: D-P1-DOWNTIME
+    dimension: downtime
+    priority: P1
+    allowed_status: [missing, undecided]
+    value: best_effort
+    reason: "未承诺服务等级时不引入高可用设计。"
+    review_trigger: "用户开始依赖持续可用，或出现合同承诺。"
+  - id: D-P1-DATA-LOSS
+    dimension: data_loss
+    priority: P1
+    allowed_status: [missing, undecided]
+    value: manual_recovery_acceptable
+    reason: "低风险阶段先采用可见、可执行的手工恢复。"
+    review_trigger: "数据无法重建，或一次丢失会造成实际损失。"
+  - id: D-P1-ENTERPRISE
+    dimension: enterprise
+    priority: P1
+    allowed_status: [undecided]
+    value: false
+    reason: "用户尚未决定企业市场时，推荐暂不引入企业级约束；不得把完全缺失静默当成 false。"
+    review_trigger: "出现企业采购、合同、SSO、审计或私有化部署需求。"
+  - id: D-P2-MAINTENANCE
+    dimension: maintenance
+    priority: P2
+    allowed_status: [missing, undecided]
+    value: "<=2h/week"
+    reason: "个人开发者默认采用低维护预算。"
+    review_trigger: "连续两周维护投入超过 2 小时。"
+  - id: D-P2-BUDGET
+    dimension: budget
+    priority: P2
+    allowed_status: [missing, undecided]
+    value: 0
+    reason: "未批准开支时不引入固定付费依赖。"
+    review_trigger: "用户明确批准持续或一次性预算。"
+  - id: D-P2-REWRITE
+    dimension: rewrite
+    priority: P2
+    allowed_status: [missing, undecided]
+    value: avoid
+    reason: "优先演进现有实现，除非证据表明无法安全迁移。"
+    review_trigger: "关键约束无法通过兼容迁移满足。"
+  - id: D-P2-I18N
+    dimension: i18n
+    priority: P2
+    allowed_status: [missing, undecided]
+    value: false
+    reason: "没有多语言用户证据时不实现国际化。"
+    review_trigger: "出现明确的第二语言用户或市场。"
+constraint_defaults:
+  L0:
+    architecture: single_process
+    database: disposable_or_none
+    deploy: local
+    auth: none
+    multi_tenant: false
+    audit: false
+    backup: none
+    testing: smoke
+    monitoring: visible_errors
+    maintenance_budget: best_effort
+  L1:
+    architecture: monolith
+    database: local_sqlite
+    deploy: local
+    auth: none
+    multi_tenant: false
+    audit: false
+    backup: manual_export
+    testing: basic
+    monitoring: logs_and_visible_errors
+    maintenance_budget: "<=2h/week"
+  L2:
+    architecture: modular_monolith
+    database: managed_relational
+    deploy: single_region_cloud
+    auth: required
+    multi_tenant: true
+    audit: false
+    backup: automated_and_restore_tested
+    testing: core_path_integration
+    monitoring: metrics_logs_alerts_and_visible_errors
+    maintenance_budget: explicit
+  L3:
+    architecture: modular_monolith_or_services_by_evidence
+    database: managed_relational
+    deploy: controlled_cloud_environment
+    auth: enterprise_identity
+    multi_tenant: by_contract
+    audit: true
+    backup: automated_with_restore_drill
+    testing: core_workflow_permission_and_migration
+    monitoring: metrics_logs_alerts_and_audit_events
+    maintenance_budget: staffed_owner
+  L4:
+    architecture: evidence_driven_with_failure_isolation
+    database: regulated_data_controls
+    deploy: controlled_and_auditable
+    auth: strong_identity_and_least_privilege
+    multi_tenant: strict_isolation_if_present
+    audit: true
+    backup: tested_recovery_objectives
+    testing: risk_based_with_failure_and_recovery
+    monitoring: end_to_end_observability_and_audit
+    maintenance_budget: formal_on_call_and_incident_response

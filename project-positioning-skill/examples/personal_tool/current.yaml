@@ -1,0 +1,84 @@
+version: v0.1
+status: reviewed
+updated: 2026-10-15
+summary: "给自己使用、不联网的 macOS 本地记账工具"
+positioning:
+  type: personal_local_tool
+  level: L1
+  stage: mvp
+  users: [self]
+  scale: 1
+  delivery: local
+  charging: false
+  criticality: low
+  compliance: low
+  data_sensitivity: personal
+non_functional_priority: [simplicity, data_safety, cost, maintainability]
+constraints:
+  architecture: monolith
+  database: local_sqlite
+  deploy: local_macos_app
+  auth: none
+  multi_tenant: false
+  audit: false
+  backup: manual_export
+  testing: basic
+  monitoring: logs_and_visible_errors
+  maintenance_budget: "<=2h/week"
+do_now:
+  - item: 账目新增与编辑
+    reason: "完成个人记账核心路径。"
+  - item: 分类与月度汇总
+    reason: "满足当前唯一分析需求。"
+  - item: 手工导出备份
+    reason: "降低本地数据不可恢复风险。"
+do_not:
+  - item: 支付与订阅
+    reason: "当前不收费且唯一用户为本人。"
+    upgrade_trigger: "决定向外部用户收费。"
+  - item: 多用户与账号系统
+    reason: "当前规模为 1，认证会增加维护成本。"
+    upgrade_trigger: "出现第二个需要独立数据空间的真实用户。"
+  - item: 云同步
+    reason: "当前明确不联网。"
+    upgrade_trigger: "需要跨设备使用且接受云端数据处理。"
+reserved:
+  - item: 数据迁移
+    boundary: "稳定的导出格式和 schema_version 字段"
+    trigger: "需要更换数据库或跨设备迁移。"
+undecided:
+  - key: i18n
+    default: false
+    reason: "没有第二语言用户证据。"
+    review_trigger: "需要录入或展示第二种语言。"
+reposition_triggers:
+  - id: RT-001
+    condition: "出现第二个需要独立数据空间的真实用户。"
+    action: reposition_review
+  - id: RT-002
+    condition: "决定收费或对公众分发。"
+    action: reposition_review
+  - id: RT-003
+    condition: "需要跨设备同步或远程访问。"
+    action: reposition_review
+source_summary:
+  - dimension: users
+    status: explicit
+    source: "input.md：只给自己用"
+  - dimension: scale
+    status: inferred
+    source: "唯一用户为本人，因此规模为 1"
+  - dimension: i18n
+    status: undecided
+    source: "问卷回答：先只做中文"
+glossary:
+  - term: 账目
+    definition: "一次收入或支出记录，包含金额、日期与分类。"
+    source: "input.md：录入、分类和月度汇总"
+  - term: 月度汇总
+    definition: "按自然月对账目金额做分类合计。"
+    source: "input.md：月度汇总"
+history:
+  - date: 2026-10-15
+    version: v0.1
+    change: "首次定位并完成 review。"

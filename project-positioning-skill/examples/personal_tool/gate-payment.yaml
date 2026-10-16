@@ -1,0 +1,21 @@
+requirement: "增加微信支付并提供月度订阅"
+assessed_at: 2026-10-15
+current_positioning_version: v0.1
+positioning_status: reviewed
+current_level: L1
+matched_rules:
+  - rule_id: G-010-DO-NOT
+    evidence: "current.yaml#do_not[0] 明确排除支付与订阅"
+  - rule_id: G-020-REPOSITION
+    evidence: "current.yaml#reposition_triggers[1] 在决定收费时要求重定位"
+in_do_not: true
+trigger_reposition: true
+risk_state: clear
+prohibited_even_after_reposition: false
+exceeds_hard_budget: false
+core_path: false
+fits_scope: false
+decision: out_of_scope
+reason: "当前定位是不收费的单用户本地工具；支付会改变用户、交付、合规和运维约束。"
+upgrade_trigger: "决定向外部用户收费，并完成收费、数据与交付方式的重定位 review。"
+action: "不在 v0.1 下实现；把需求记录为升级候选并先执行重定位。"

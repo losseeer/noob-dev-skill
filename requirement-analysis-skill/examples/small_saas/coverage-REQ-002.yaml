@@ -1,0 +1,270 @@
+version: 1
+requirement_id: REQ-002
+title: 通过邀请链接加入空间
+as_of: 2026-10-08
+source_summary: 协作 SaaS 开发者反馈：链接邀请、永久有效、要看到谁什么时候加入、不想让人注册
+positioning_context: read
+ready_for_modeling: true
+
+coverage:
+  - dimension: actor
+    priority: P0
+    status: explicit
+    value: [空间管理员（生成链接的人）, 被邀请者（同事）, 未受邀请的访问者]
+    evidence:
+      - source: 用户反馈 2026-10-08
+        excerpt: "我想加个邀请成员的功能，就是生成个链接发给同事"
+      - source: 用户反馈 2026-10-08
+        excerpt: "同事点进去就能加入我的空间"
+    confidence: 0.9
+
+  - dimension: goal
+    priority: P0
+    status: explicit
+    value: 降低拉人进空间的摩擦，同时让管理员能追溯成员来源并清理成员
+    evidence:
+      - source: 用户反馈 2026-10-08
+        excerpt: "生成个链接发给同事"
+      - source: 用户反馈 2026-10-08
+        excerpt: "我希望能看到谁什么时候加入的，方便我回头清理"
+    confidence: 0.9
+
+  - dimension: trigger
+    priority: P0
+    status: explicit
+    value: [管理员在空间成员页点击「生成邀请链接」, 被邀请者打开该链接]
+    evidence:
+      - source: 用户反馈 2026-10-08
+        excerpt: "就是生成个链接发给同事，同事点进去就能加入我的空间"
+    confidence: 0.9
+
+  - dimension: main_flow
+    priority: P0
+    status: inferred
+    value:
+      - 管理员生成邀请链接
+      - 被邀请者打开链接
+      - 系统校验链接有效性与剩余名额
+      - 校验通过后建立成员关系并返回加入结果
+    reason: 链接邀请类功能的标准动作链，用户描述了首尾两步，中间由场景补充
+    confidence: 0.75
+    evidence:
+      - source: 用户反馈 2026-10-08
+        excerpt: "生成个链接发给同事，同事点进去就能加入我的空间"
+
+  - dimension: acceptance
+    priority: P0
+    status: low_confidence
+    value: 管理员能看到「谁 + 什么时候加入」这条记录
+    reason: 用户只说了想看到什么，没说展示在哪、精度到什么程度、链接失效后展示什么
+    evidence:
+      - source: 用户反馈 2026-10-08
+        excerpt: "我希望能看到谁什么时候加入的，方便我回头清理"
+    confidence: 0.5
+
+  - dimension: data
+    priority: P0
+    status: explicit
+    value:
+      inputs: [invite_token, space_id, invitee_email]
+      outputs: [membership_id, joined_at]
+      entities: [Invite, Membership]
+    evidence:
+      - source: 用户反馈 2026-10-08
+        excerpt: "生成个链接发给同事"
+      - source: 用户反馈 2026-10-08
+        excerpt: "我希望能看到谁什么时候加入的"
+    confidence: 0.8
+
+  - dimension: exception
+    priority: P0
+    status: low_confidence
+    value: 网络失败时提示重试；令牌失效、链接被撤销、非受邀人访问三类异常未定义
+    reason: 初稿只覆盖到网络失败，令牌类异常完全没提，而令牌正是本需求的核心资源
+    rule_id: COV-001
+    confidence: 0.45
+    evidence:
+      - source: 用户反馈 2026-10-08
+        excerpt: "同事点进去就能加入我的空间"
+
+  - dimension: permission
+    priority: P0
+    status: explicit
+    value: 仅空间管理员可生成、查看和撤销邀请链接
+    evidence:
+      - source: 用户反馈 2026-10-08
+        excerpt: "我想加个邀请成员的功能"  # 发起者是空间拥有者语境
+    confidence: 0.7
+
+  - dimension: preconditions
+    priority: P1
+    status: inferred
+    value:
+      - 操作者已是该空间管理员
+      - 空间处于启用状态
+    reason: 生成邀请链接的动作位于成员管理页，隐含管理员身份
+    confidence: 0.8
+    evidence:
+      - source: 用户反馈 2026-10-08
+        excerpt: "同事点进去就能加入我的空间"
+
+  - dimension: alternate_flow
+    priority: P1
+    status: undecided
+    value: 链接达到使用上限后自动失效
+    reason: 用户说「永久有效」，与「需要能清理成员」存在张力，先按有限次数放行并等待确认
+    review_trigger: 用户确认是否接受「永久有效」带来的失控风险；首次出现「链接被乱发」反馈时立即复审
+    confidence: 0.5
+    evidence:
+      - source: 用户反馈 2026-10-08
+        excerpt: "链接最好永久有效，这样我发群里就一直能用"
+
+  - dimension: non_functional
+    priority: P1
+    status: low_confidence
+    value: "加入动作应尽快生效"
+    reason: 使用了模糊词「尽快」，无法验收
+    evidence:
+      - source: 需求初稿 non_functional
+        excerpt: "加入动作应尽快生效"
+    confidence: 0.4
+
+  - dimension: interface
+    priority: P1
+    status: inferred
+    value: 不新增对外 OpenAPI，仅内部路由
+    rule_id: DEF-011
+    reason: 邀请链接是产品内流程，用户未提及任何外部调用方
+    review_trigger: 企业客户要求批量导入成员时重新评估
+    confidence: 0.7
+    evidence:
+      - source: 推断依据 DEF-011
+        excerpt: 未说明接口时默认不新增外部接口，只描述内部行为
+
+  - dimension: dependency
+    priority: P1
+    status: inferred
+    value: [现有用户体系, 现有空间成员关系]
+    reason: 成员关系必须挂在已有用户记录上
+    confidence: 0.8
+    evidence:
+      - source: 推断依据 DEF-012
+        excerpt: 默认为空依赖，发现依赖时补入 dependencies
+
+  - dimension: glossary
+    priority: P2
+    status: inferred
+    value:
+      - term: 邀请链接
+        definition: 由空间管理员生成、携带 invite_token 的一次性或限次 URL
+      - term: 加入
+        definition: 被邀请者通过邀请链接成功建立空间成员关系
+    rule_id: DEF-013
+    reason: 「邀请链接」与「邀请（邮件）」容易混用，先固化定义
+    confidence: 0.8
+    evidence:
+      - source: 推断依据 DEF-013
+        excerpt: 默认复用已有术语；无法复用时才新增并写入 glossary
+
+  - dimension: trace
+    priority: P2
+    status: explicit
+    value: 用户反馈 2026-10-08
+    evidence:
+      - source: 用户反馈 2026-10-08
+        excerpt: "我想加个邀请成员的功能"
+    confidence: 0.95
+
+  - dimension: risk
+    priority: P2
+    status: explicit
+    value:
+      - description: 永久有效链接被转发到公开渠道，导致任何人可加入空间
+        level: high
+        mitigation: 改为限次 + 可撤销，并设置有效期默认值
+    evidence:
+      - source: 用户反馈 2026-10-08
+        excerpt: "链接最好永久有效，这样我发群里就一直能用"
+    confidence: 0.85
+
+  - dimension: test_notes
+    priority: P2
+    status: inferred
+    value:
+      - 并发场景需覆盖：同一令牌被多人同时使用
+      - boundary 场景需覆盖：令牌已撤销、令牌已过期、已达使用上限
+    rule_id: DEF-015
+    reason: 令牌是本需求的核心资源，其失效组合必须逐条列出
+    confidence: 0.7
+    evidence:
+      - source: 推断依据 DEF-015
+        excerpt: 不适用的标准场景必须写明「不适用 + 原因」，不允许留空
+
+questions:
+  - id: Q1
+    dimension: acceptance
+    priority: P0
+    rule_id: COV-001
+    reason: P0 维度 low_confidence：异常覆盖不全，追问一句能区分结果的问题
+    prompt: 同事打开链接后，哪些情况算「加入失败」？失败时你希望他看到什么？
+    options:
+      - label: 链接失效/过期/被撤销 → 提示链接不可用（推荐）
+        value: "invalid_token -> 展示链接不可用"
+        impact: 覆盖面最广，成本最低，避免进入半成品状态
+      - label: 只有已达上限一种失败
+        value: "quota_exceeded -> 展示名额已满"
+        impact: 覆盖不全，令牌被撤销后用户会看到白屏或报错
+      - label: 不做任何失败处理
+        value: "none"
+        impact: 违反 DEF-002，门禁会因 complete 失败被拦下
+    recommendation: "invalid_token -> 展示链接不可用"
+    allow_other: true
+
+skipped:
+  - dimension: goal
+    reason: 用户明确说明了拉人目的与追溯需求
+    rule_id: COV-006
+  - dimension: trace
+    reason: 来源明确
+    rule_id: COV-006
+
+defaults_applied:
+  - dimension: interface
+    value: 不新增对外 OpenAPI
+    rule_id: DEF-011
+    reason: 无外部调用方
+    review_trigger: 企业客户要求批量导入成员时重新评估
+  - dimension: dependency
+    value: [现有用户体系, 现有空间成员关系]
+    rule_id: DEF-012
+    reason: 成员关系依附已有用户记录
+    review_trigger: 每次需求变更时重新扫描依赖
+  - dimension: test_notes
+    value: 不适用场景必须写明原因
+    rule_id: DEF-015
+    reason: 防止留空被误读为已确认
+    review_trigger: 需求范围变化时重新逐条核对
+
+conflicts:
+  - rule_id: CON-002
+    pair: [no_auth, personalization]
+    severity: blocking
+    status: resolved
+    message: 未登录却要求识别「谁加入了」，请确认如何识别用户。
+    evidence:
+      - source: 用户反馈 2026-10-08
+        excerpt: "对了，别让人家注册，点链接直接进就行"
+      - source: 用户反馈 2026-10-08
+        excerpt: "另外我希望能看到谁什么时候加入的"
+    resolution: 采用邮箱确认式免密加入：被邀请者填邮箱收验证码，不设密码，体验接近「直接进」但留下可识别身份
+  - rule_id: CON-007
+    pair: [all_users_anonymous, audit_required]
+    severity: blocking
+    status: resolved
+    message: 免注册与「看到谁什么时候加入」冲突，请确认如何取舍。
+    evidence:
+      - source: 用户反馈 2026-10-08
+        excerpt: "别让人家注册"
+      - source: 用户反馈 2026-10-08
+        excerpt: "我希望能看到谁什么时候加入的，方便我回头清理"
+    resolution: 对外展示邮箱，仅管理员可见加入时间与来源链接，兼顾免注册体验与可追溯

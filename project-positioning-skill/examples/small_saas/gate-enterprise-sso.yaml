@@ -1,0 +1,21 @@
+requirement: "支持企业 SAML SSO"
+assessed_at: 2026-10-15
+current_positioning_version: v0.1
+positioning_status: reviewed
+current_level: L2
+matched_rules:
+  - rule_id: G-010-DO-NOT
+    evidence: "current.yaml#do_not[0] 明确排除企业 SSO"
+  - rule_id: G-020-REPOSITION
+    evidence: "current.yaml#reposition_triggers[0] 将企业 SSO 定义为重定位触发条件"
+in_do_not: true
+trigger_reposition: true
+risk_state: clear
+prohibited_even_after_reposition: false
+exceeds_hard_budget: false
+core_path: false
+fits_scope: false
+decision: out_of_scope
+reason: "企业 SSO 会引入企业身份集成、合同支持和更高运维承诺，超出当前独立开发者 SaaS 定位。"
+upgrade_trigger: "出现愿意签约的企业客户，并确认 SSO、审计、支持和部署责任。"
+action: "先执行企业定位 review；不得仅为潜在客户提前实现。"

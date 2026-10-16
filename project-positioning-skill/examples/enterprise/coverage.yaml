@@ -1,0 +1,160 @@
+version: 1
+as_of: 2026-10-15
+coverage:
+  - dimension: users
+    priority: P0
+    status: explicit
+    value: [enterprise, employees]
+    evidence:
+      - source: input.md
+        excerpt: "一家 300 人公司；约 60 名固定使用者"
+  - dimension: charging
+    priority: P0
+    status: explicit
+    value: false
+    evidence:
+      - source: input.md
+        excerpt: "不收费"
+  - dimension: data
+    priority: P0
+    status: explicit
+    value: procurement_records
+    evidence:
+      - source: input.md
+        excerpt: "采购申请、审批意见和供应商联系人"
+  - dimension: data_sensitivity
+    priority: P0
+    status: explicit
+    value: sensitive
+    evidence:
+      - source: questionnaire
+        excerpt: "采购金额、审批意见和供应商联系人属于公司敏感数据"
+  - dimension: compliance
+    priority: P0
+    status: explicit
+    value: medium
+    evidence:
+      - source: input.md
+        excerpt: "按公司制度保留操作记录一年，不涉及强监管行业"
+  - dimension: criticality
+    priority: P0
+    status: explicit
+    value: medium
+    evidence:
+      - source: input.md
+        excerpt: "故障会阻塞采购，但允许工作时间内短暂停机"
+  - dimension: scale
+    priority: P1
+    status: explicit
+    value: 60
+    evidence:
+      - source: input.md
+        excerpt: "约 60 名固定使用者"
+  - dimension: delivery
+    priority: P1
+    status: explicit
+    value: cloud
+    evidence:
+      - source: input.md
+        excerpt: "部署在公司的云账号"
+  - dimension: enterprise
+    priority: P1
+    status: explicit
+    value: true
+    evidence:
+      - source: input.md
+        excerpt: "一家 300 人公司"
+  - dimension: maintenance
+    priority: P2
+    status: explicit
+    value: internal_it
+    evidence:
+      - source: input.md
+        excerpt: "由内部 IT 值守"
+  - dimension: stage
+    priority: P1
+    status: inferred
+    value: mvp
+    evidence:
+      - source: input.md
+        excerpt: "第一期不面向公众"
+    reason: "描述明确限定第一期范围。"
+    confidence: 0.9
+  - dimension: form
+    priority: P2
+    status: inferred
+    value: internal_web_app
+    evidence:
+      - source: input.md
+        excerpt: "内部采购审批系统；部署在公司的云账号"
+    reason: "公司云内固定员工使用，适合内部 Web 应用形态。"
+    confidence: 0.85
+  - dimension: regulation
+    priority: P0
+    status: explicit
+    value: internal_policy
+    evidence:
+      - source: input.md
+        excerpt: "按公司制度保留操作记录一年，不涉及强监管行业"
+  - dimension: downtime
+    priority: P1
+    status: explicit
+    value: short_business_hours_outage_allowed
+    evidence:
+      - source: input.md
+        excerpt: "允许工作时间内短暂停机"
+  - dimension: data_loss
+    priority: P1
+    status: explicit
+    value: restore_required
+    evidence:
+      - source: questionnaire
+        excerpt: "采购申请和审批意见不能静默丢失，必须能从备份恢复"
+  - dimension: contractual_obligation
+    priority: P1
+    status: explicit
+    value: true
+    evidence:
+      - source: questionnaire
+        excerpt: "内部 IT 对采购部门承担持续服务责任"
+  - dimension: audit_required
+    priority: P1
+    status: explicit
+    value: true
+    evidence:
+      - source: input.md
+        excerpt: "保留操作记录一年"
+  - dimension: auth
+    priority: P0
+    status: explicit
+    value: corporate_sso
+    evidence:
+      - source: input.md
+        excerpt: "接入公司 SSO"
+  - dimension: budget
+    priority: P2
+    status: explicit
+    value: company_approved
+    evidence:
+      - source: questionnaire
+        excerpt: "公司已批准云资源和内部 IT 维护预算"
+  - dimension: experience
+    priority: P2
+    status: explicit
+    value: internal_it_supported
+    evidence:
+      - source: input.md
+        excerpt: "由内部 IT 值守"
+questions: []
+skipped: []
+defaults_applied:
+  - dimension: rewrite
+    value: avoid
+    rule_id: D-P2-REWRITE
+    reason: "没有证据表明需要重写现有系统。"
+    review_trigger: "关键约束无法通过兼容演进满足。"
+  - dimension: i18n
+    value: false
+    rule_id: D-P2-I18N
+    reason: "没有第二语言用户证据。"
+    review_trigger: "公司出现明确的第二工作语言要求。"

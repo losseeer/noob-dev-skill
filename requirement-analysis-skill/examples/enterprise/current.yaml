@@ -1,0 +1,50 @@
+version: 1
+as_of: 2026-10-12
+project: enterprise-billing
+positioning_context: read
+positioning_ref: .project/positioning/current.yaml
+positioning_fields_read:
+  - summary
+  - constraints
+  - glossary
+summary: 企业级账单平台的季度需求批次，含账单导出与操作审计两条需求
+
+requirements:
+  - id: REQ-010
+    title: 导出月度账单 PDF
+    version: v0.1
+    status: reviewed
+    priority: must
+    source: 会议记录 2026-10-12
+    file: requirements/REQ-010.yaml
+    gate: pass
+    depends_on: []
+    order: 2
+  - id: REQ-011
+    title: 账单异步导出方案探针（spike）
+    version: v0.1
+    status: draft
+    priority: must
+    source: 会议记录 2026-10-12
+    file: requirements/REQ-011.yaml
+    gate: not_run
+    parent: REQ-010
+    depends_on: []
+    order: 1
+
+open_questions:
+  - REQ-010 导出文件删除是否需要二次告警；当前按 30 天自动删除处理
+
+warnings:
+  - REQ-011 的探针结论会回写 REQ-010 的 non_functional 阈值，届时门禁结论失效需重跑
+  - 已产出 3 条定位候选，等待项目定位 Skill 的范围门禁处理
+
+counts:
+  total: 2
+  by_status:
+    draft: 1
+    reviewed: 1
+  by_priority:
+    must: 2
+  gate_passed: 1
+  gate_pending: 1

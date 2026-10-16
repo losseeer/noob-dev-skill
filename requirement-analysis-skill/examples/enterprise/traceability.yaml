@@ -1,0 +1,48 @@
+version: 1
+as_of: 2026-10-12
+
+entries:
+  - source: 会议记录 2026-10-12 · 企业客户季度需求沟通
+    source_type: meeting
+    requirement_id: REQ-010
+    version: v0.1
+    acceptance_criteria:
+      - AC-010
+      - AC-011
+      - AC-012
+      - AC-013
+      - AC-014
+      - AC-015
+      - AC-016
+    realization: []
+    status: partially_linked
+    note: 尚未关联实现文件与测试用例，实现后回填 realization
+
+  - source: 会议记录 2026-10-12 · 导出性能风险
+    source_type: meeting
+    requirement_id: REQ-011
+    version: v0.1
+    acceptance_criteria:
+      - AC-020
+      - AC-021
+    realization: []
+    status: partially_linked
+    note: spike 类需求以结论文档作为 realization
+
+orphans:
+  sources_without_requirement: []
+  requirements_without_source: []
+  acceptance_without_test:
+    - AC-010
+    - AC-011
+    - AC-012
+    - AC-013
+    - AC-014
+    - AC-015
+    - AC-016
+    - AC-020
+    - AC-021
+
+warnings:
+  - 全部 AC 尚无对应测试条目，实现阶段需回填
+  - REQ-011 结论回写后需更新本矩阵的版本号

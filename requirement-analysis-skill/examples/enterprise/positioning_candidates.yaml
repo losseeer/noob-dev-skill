@@ -1,0 +1,43 @@
+version: 1
+as_of: 2026-10-12
+decision_owner: project-positioning-skill
+positioning_context: read
+note: >-
+  本文件只记录候选。需求分析 Skill 不对这些候选做任何决策，
+  范围门禁（该不该做、是否需要重新定位）由项目定位 Skill 负责。
+
+candidates:
+  - id: POS-CAND-001
+    source_requirement: REQ-010
+    candidate: 可能需要新增计费/账单能力作为产品正式能力
+    signal: billing
+    reason: 需求中出现月度账单、账期结算、财务留档等计费域概念
+    evidence:
+      - "会议记录 2026-10-12：我们需要把每个月的账单导出成 PDF，财务要留档"
+      - "会议记录 2026-10-12：账单数据只允许财务组的同事看"
+    severity: review_recommended
+    action: 建议交给项目定位 Skill 做范围门禁
+    status: open
+
+  - id: POS-CAND-002
+    source_requirement: REQ-010
+    candidate: 可能需要提供企业级审计能力
+    signal: audit
+    reason: 要求记录谁在什么时候导出了哪个账期，且需要事后追责
+    evidence:
+      - "会议记录 2026-10-12：导出的时候要留下操作日志，谁导的、什么时候导的、导出哪个账期"
+    severity: review_recommended
+    action: 建议交给项目定位 Skill 做范围门禁
+    status: open
+
+  - id: POS-CAND-003
+    source_requirement: REQ-010
+    candidate: 可能需要满足企业级合规与数据保留要求
+    signal: compliance
+    reason: 存在明确的权限组隔离与服务器上文件 30 天删除的保留策略要求
+    evidence:
+      - "会议记录 2026-10-12：账单数据只允许财务组的同事看"
+      - "会议记录 2026-10-12：导出文件在服务器上保留 30 天就删掉"
+    severity: review_recommended
+    action: 建议交给项目定位 Skill 做范围门禁
+    status: open

@@ -1,0 +1,123 @@
+name: requirement-check
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: python -m pip install -r scripts/requirements.txt
+
+      - name: Resolve skill path
+        id: skill
+        run: |
+          if [ -d "requirement-analysis-skill" ]; then
+            echo "path=requirement-analysis-skill" >> "$GITHUB_OUTPUT"
+          elif [ -d ".skills/requirement-analysis" ]; then
+            echo "path=.skills/requirement-analysis" >> "$GITHUB_OUTPUT"
+          else
+            echo "Skill directory not found" >&2
+            exit 1
+          fi
+
+      - name: Validate every requirement card
+        run: |
+          set -eu
+          SKILL="${{ steps.skill.outputs.path }}"
+          found=0
+          for f in .project/requirements/requirements/REQ-*.yaml \
+                   "$SKILL"/examples/*/REQ-*.yaml; do
+            [ -e "$f" ] || continue
+            found=1
+            echo "::group::validating $f"
+            python "$SKILL/scripts/validate_artifact.py" requirement "$f"
+            echo "::endgroup::"
+          done
+          if [ "$found" -eq 0 ]; then
+            echo "No requirement card found, nothing to validate."
+          fi
+
+      - name: Validate other artifacts
+        run: |
+          set -eu
+          SKILL="${{ steps.skill.outputs.path }}"
+          check() {
+            kind="$1"; shift
+            for f in "$@"; do
+              [ -e "$f" ] || continue
+              python "$SKILL/scripts/validate_artifact.py" "$kind" "$f"
+            done
+          }
+          check coverage .project/requirements/coverage/*.yaml "$SKILL"/examples/*/coverage-*.yaml
+          check quality_gate .project/requirements/reviews/*.yaml "$SKILL"/examples/*/gate-*.yaml
+          check requirement_set .project/requirements/current.yaml "$SKILL"/examples/*/current.yaml
+          check traceability .project/requirements/traceability.yaml "$SKILL"/examples/*/traceability.yaml
+          check positioning_candidate .project/requirements/positioning_candidates.yaml "$SKILL"/examples/*/positioning_candidates.yaml
+
+      - name: Check must requirements have acceptance criteria
+        run: |
+          set -eu
+          python - <<'PY'
+          import glob, sys
+          import yaml
+
+          failed = []
+          for path in glob.glob(".project/requirements/requirements/REQ-*.yaml"):
+              with open(path, encoding="utf-8") as handle:
+                  data = yaml.safe_load(handle)
+              if data.get("priority") == "must" and not data.get("acceptance_criteria"):
+                  failed.append(path)
+              for ac in data.get("acceptance_criteria", []):
+                  if not all(key in ac for key in ("given", "when", "then")):
+                      failed.append(f"{path}:{ac.get('id')} missing Given/When/Then")
+
+          if failed:
+              print("Requirement quality check failed:", file=sys.stderr)
+              for item in failed:
+                  print(f"- {item}", file=sys.stderr)
+              raise SystemExit(1)
+          print("Requirement quality check passed.")
+          PY
+
+      - name: Scan for forbidden vague words
+        run: |
+          set -eu
+          python - <<'PY'
+          import glob, sys
+          import yaml
+
+          FORBIDDEN = ["友好", "快速", "稳定", "安全", "合理", "尽量", "等等",
+                       "大约", "差不多", "比较好", "适当", "及时", "高效",
+                       "尽快", "尽量快", "比较好用"]
+
+          hits = []
+          for path in glob.glob(".project/requirements/requirements/REQ-*.yaml"):
+              with open(path, encoding="utf-8") as handle:
+                  data = yaml.safe_load(handle)
+              for field in ("goal", "value", "non_functional", "main_flow",
+                            "exception_flows", "permission"):
+                  target = data.get(field)
+                  blob = yaml.safe_dump(target, allow_unicode=True)
+                  for word in FORBIDDEN:
+                      if word in blob:
+                          hits.append(f"{path}:{field} contains '{word}'")
+
+          if hits:
+              print("Found vague words:", file=sys.stderr)
+              for item in hits:
+                  print(f"- {item}", file=sys.stderr)
+              print("\nReplace them with numbers + units + conditions before merging.",
+                    file=sys.stderr)
+              raise SystemExit(1)
+          print("Vague word scan passed.")
+          PY

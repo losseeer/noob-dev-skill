@@ -1,0 +1,229 @@
+version: 1
+requirement_id: REQ-010
+title: 导出月度账单 PDF
+as_of: 2026-10-12
+source_summary: 企业客户季度需求沟通：账单 PDF 导出、明细关联订单、操作留痕、权限组限制、30 天保留
+positioning_context: read
+ready_for_modeling: true
+
+coverage:
+  - dimension: actor
+    priority: P0
+    status: explicit
+    value: [财务组成员, 非财务组成员, 导出任务执行器（系统）]
+    evidence:
+      - source: 会议记录 2026-10-12
+        excerpt: "账单数据只允许财务组的同事看"
+      - source: 会议记录 2026-10-12
+        excerpt: "导出的时候要留下操作日志，谁导的、什么时候导的"
+    confidence: 0.9
+
+  - dimension: goal
+    priority: P0
+    status: explicit
+    value: 满足财务月度留档要求，且导出行为可被事后追责
+    evidence:
+      - source: 会议记录 2026-10-12
+        excerpt: "我们需要把每个月的账单导出成 PDF，财务要留档"
+      - source: 会议记录 2026-10-12
+        excerpt: "还要能显示每笔明细对应的订单"
+    confidence: 0.9
+
+  - dimension: trigger
+    priority: P0
+    status: explicit
+    value: [财务组成员在账单页选择账期并点击「导出 PDF」]
+    evidence:
+      - source: 会议记录 2026-10-12
+        excerpt: "我们需要把每个月的账单导出成 PDF"
+    confidence: 0.85
+
+  - dimension: main_flow
+    priority: P0
+    status: inferred
+    value:
+      - 财务组成员选择账期并点击导出
+      - 系统校验其是否属于财务组
+      - 系统生成含订单明细的 PDF
+      - 系统记录一条导出日志
+      - 完成后向操作者提供下载入口
+    reason: 用户描述了目标与约束，中间执行链条按账单导出类功能的常规形态补齐
+    confidence: 0.75
+    evidence:
+      - source: 会议记录 2026-10-12
+        excerpt: "把每个月的账单导出成 PDF，还要能显示每笔明细对应的订单"
+
+  - dimension: acceptance
+    priority: P0
+    status: explicit
+    value: PDF 含该账期全部明细行及对应订单号；导出行为进操作日志；30 天后服务器上的文件被删除
+    evidence:
+      - source: 会议记录 2026-10-12
+        excerpt: "还要能显示每笔明细对应的订单"
+      - source: 会议记录 2026-10-12
+        excerpt: "导出文件在服务器上保留 30 天就删掉"
+    confidence: 0.85
+
+  - dimension: data
+    priority: P0
+    status: explicit
+    value:
+      inputs: [billing_period, tenant_id, operator_id]
+      outputs: [export_job_id, file_path, checksum, exported_at]
+      entities: [BillExportJob, BillLine]
+    evidence:
+      - source: 会议记录 2026-10-12
+        excerpt: "每笔明细对应的订单"
+      - source: 会议记录 2026-10-12
+        excerpt: "导出文件在服务器上保留 30 天就删掉"
+    confidence: 0.85
+
+  - dimension: exception
+    priority: P0
+    status: explicit
+    value: 导出失败时展示失败原因并保留任务记录；同一任务重复执行不产生第二份文件
+    evidence:
+      - source: 会议记录 2026-10-12
+        excerpt: "导出别太快把系统卡死"
+      - source: 推断依据 DEF-002
+        excerpt: 写操作失败时提示失败并保留上下文，允许重试
+    rule_id: DEF-002
+    confidence: 0.75
+
+  - dimension: permission
+    priority: P0
+    status: explicit
+    value: 仅财务组成员可发起导出并下载文件；其他成员访问导出入口返回无权限且不透露文件是否存在
+    evidence:
+      - source: 会议记录 2026-10-12
+        excerpt: "账单数据只允许财务组的同事看"
+    confidence: 0.95
+
+  - dimension: preconditions
+    priority: P1
+    status: explicit
+    value:
+      - 目标账期的账单已结算完成
+      - 操作者已登录且属于财务组
+    evidence:
+      - source: 会议记录 2026-10-12
+        excerpt: "账单数据只允许财务组的同事看"
+    confidence: 0.85
+
+  - dimension: alternate_flow
+    priority: P1
+    status: inferred
+    value: 明细超过阈值时转为异步导出，完成后通知操作者
+    reason: 一万多行的同步导出会打满请求线程，与「别把系统卡死」直接冲突
+    confidence: 0.7
+    evidence:
+      - source: 会议记录 2026-10-12
+        excerpt: "导出别太快把系统卡死，大客户的账单一万多行"
+
+  - dimension: non_functional
+    priority: P1
+    status: inferred
+    value:
+      - 单账期账单行数上限 50000 行
+      - 异步导出任务排队后 P95 启动时延 < 5s
+      - 明细行数 > 5000 时强制异步
+    reason: 把「别太快别卡死」翻译成可验收的量化指标
+    rule_id: DEF-009
+    confidence: 0.7
+    evidence:
+      - source: 推断依据 DEF-009
+        excerpt: 非功能需求需要数字 + 单位 + 条件才能验收
+
+  - dimension: interface
+    priority: P1
+    status: explicit
+    value: 内部导出路由，不对外开放 OpenAPI
+    evidence:
+      - source: 会议记录 2026-10-12
+        excerpt: "账单数据只允许财务组的同事看"
+    confidence: 0.6
+
+  - dimension: dependency
+    priority: P1
+    status: explicit
+    value: [订单服务（提供明细与订单号）, 权限组服务（提供财务组身份）, 对象存储（提供文件落地）]
+    evidence:
+      - source: 会议记录 2026-10-12
+        excerpt: "还要能显示每笔明细对应的订单"
+    confidence: 0.8
+
+  - dimension: glossary
+    priority: P2
+    status: explicit
+    value:
+      - term: 账期
+        definition: 一个自然月的账单结算区间，格式 YYYY-MM
+      - term: 明细行
+        definition: 账单内的一条计费记录，含金额与对应订单号
+    evidence:
+      - source: 会议记录 2026-10-12
+        excerpt: "每个月的账单"
+    confidence: 0.85
+
+  - dimension: trace
+    priority: P2
+    status: explicit
+    value: 会议记录 2026-10-12
+    evidence:
+      - source: 会议记录 2026-10-12
+        excerpt: "企业客户季度需求沟通"
+    confidence: 0.95
+
+  - dimension: risk
+    priority: P2
+    status: explicit
+    value:
+      - description: 大账户同步导出打满请求线程导致服务不可用
+        level: high
+        mitigation: 拆出 REQ-011 做异步导出探针，验证后再决定阈值
+    evidence:
+      - source: 会议记录 2026-10-12
+        excerpt: "导出别太快把系统卡死，大客户的账单一万多行"
+    confidence: 0.9
+
+  - dimension: test_notes
+    priority: P2
+    status: inferred
+    value:
+      - boundary 场景需覆盖：50000 行上限、空账期、跨时区账期边界
+      - concurrency 场景需覆盖：同一账期被两人同时导出
+    rule_id: DEF-015
+    reason: 账单导出涉及重资源操作，行上限与并发是必须点明的测试边界
+    confidence: 0.75
+    evidence:
+      - source: 推断依据 DEF-015
+        excerpt: 不适用的标准场景必须写明「不适用 + 原因」
+
+questions: []
+
+skipped:
+  - dimension: permission
+    reason: 客户已明确给出内部规定，结论确定
+    rule_id: COV-006
+  - dimension: trace
+    reason: 来源为 2026-10-12 会议记录
+    rule_id: COV-006
+
+defaults_applied:
+  - dimension: non_functional
+    value: 50000 行上限 / 异步任务 P95 启动 < 5s
+    rule_id: DEF-009
+    reason: 把「别卡死」量化为可验收指标
+    review_trigger: 上线后按最大客户体量复核
+  - dimension: exception
+    value: 失败时保留任务记录并允许重试
+    rule_id: DEF-002
+    reason: 导出属重操作，失败必须可恢复
+    review_trigger: 引入消息队列后重新确认重试语义
+  - dimension: test_notes
+    value: 不适用场景必须写明原因
+    rule_id: DEF-015
+    reason: 防止留空被误读为已确认
+    review_trigger: 需求范围变化时重新逐条核对
+
+conflicts: []

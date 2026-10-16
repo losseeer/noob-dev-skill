@@ -1,0 +1,74 @@
+version: v0.1
+status: reviewed
+updated: 2026-10-15
+summary: "部署在公司云账号内、服务固定员工的采购审批系统"
+positioning:
+  type: internal_enterprise_system
+  level: L3
+  stage: mvp
+  users: [enterprise, employees]
+  scale: 60
+  delivery: cloud
+  charging: false
+  criticality: medium
+  compliance: medium
+  data_sensitivity: sensitive
+non_functional_priority: [security, auditability, data_safety, availability, maintainability]
+constraints:
+  architecture: modular_monolith
+  database: managed_postgresql
+  deploy: company_cloud_account
+  auth: corporate_sso
+  multi_tenant: false
+  audit: true
+  backup: daily_automated_with_restore_drill
+  testing: core_workflow_and_permission_integration
+  monitoring: metrics_logs_alerts_and_audit_events
+  maintenance_budget: internal_it_on_call
+
+do_now:
+  - item: 采购申请与审批流
+    reason: "完成系统核心业务路径。"
+  - item: 公司 SSO 与角色授权
+    reason: "限制内部敏感采购数据访问。"
+  - item: 一年操作记录
+    reason: "满足公司制度要求。"
+do_not:
+  - item: 公众注册
+    reason: "系统只服务固定员工。"
+    upgrade_trigger: "公司决定向外部供应商开放，并完成身份、数据和合规 review。"
+  - item: 多公司租户
+    reason: "当前只有一个公司数据边界。"
+    upgrade_trigger: "产品需要服务第二家公司且要求逻辑数据隔离。"
+  - item: 对外收费
+    reason: "当前是内部系统，不是商业 SaaS。"
+    upgrade_trigger: "公司决定将系统产品化销售。"
+reserved:
+  - item: 外部供应商接入
+    boundary: "供应商 ID 与内部员工 ID 使用不同主体类型"
+    trigger: "批准供应商自助提交资料。"
+undecided: []
+reposition_triggers:
+  - id: RT-001
+    condition: "向外部供应商或公众开放访问。"
+    action: reposition_review
+  - id: RT-002
+    condition: "服务第二家公司或出现租户隔离要求。"
+    action: reposition_review
+  - id: RT-003
+    condition: "进入强监管行业或新增法定留存要求。"
+    action: reposition_review
+source_summary:
+  - dimension: enterprise
+    status: explicit
+    source: "input.md：一家 300 人公司内部使用"
+  - dimension: compliance
+    status: explicit
+    source: "input.md：按公司制度保留操作记录一年"
+  - dimension: data_sensitivity
+    status: explicit
+    source: "问卷确认采购与联系人信息为公司敏感数据"
+history:
+  - date: 2026-10-15
+    version: v0.1
+    change: "首次定位并完成 review。"

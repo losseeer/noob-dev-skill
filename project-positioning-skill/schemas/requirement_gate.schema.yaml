@@ -1,0 +1,87 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://example.local/project-positioning/requirement_gate.schema.yaml"
+title: Project positioning requirement gate result
+type: object
+additionalProperties: false
+required:
+  - requirement
+  - assessed_at
+  - current_positioning_version
+  - positioning_status
+  - current_level
+  - matched_rules
+  - risk_state
+  - prohibited_even_after_reposition
+  - in_do_not
+  - trigger_reposition
+  - exceeds_hard_budget
+  - core_path
+  - fits_scope
+  - decision
+  - reason
+  - upgrade_trigger
+  - action
+properties:
+  requirement:
+    type: string
+    minLength: 1
+  assessed_at:
+    type: string
+    format: date
+  current_positioning_version:
+    type: string
+    pattern: "^v[0-9]+\\.[0-9]+$"
+  positioning_status:
+    enum: [draft, reviewed, frozen, superseded]
+  current_level:
+    enum: [L0, L1, L2, L3, L4]
+  matched_rules:
+    type: array
+    minItems: 1
+    items:
+      type: object
+      additionalProperties: false
+      required: [rule_id, evidence]
+      properties:
+        rule_id:
+          type: string
+        evidence:
+          type: string
+          minLength: 1
+  risk_state:
+    enum: [clear, unresolved, blocked]
+  prohibited_even_after_reposition:
+    type: boolean
+  in_do_not:
+    type: boolean
+  trigger_reposition:
+    type: boolean
+  exceeds_hard_budget:
+    type: boolean
+  core_path:
+    type: boolean
+  fits_scope:
+    type: boolean
+  decision:
+    enum: [must, should, out_of_scope, reject]
+  reason:
+    type: string
+    minLength: 1
+  upgrade_trigger:
+    oneOf:
+      - type: string
+      - type: "null"
+  action:
+    type: string
+    minLength: 1
+allOf:
+  - if:
+      properties:
+        decision:
+          const: out_of_scope
+      required: [decision]
+    then:
+      properties:
+        upgrade_trigger:
+          type: string
+          minLength: 1

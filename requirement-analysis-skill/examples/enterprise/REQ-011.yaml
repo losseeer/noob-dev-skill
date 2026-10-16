@@ -1,0 +1,88 @@
+id: REQ-011
+title: 账单异步导出方案探针（spike）
+version: v0.1
+status: draft
+type: functional
+priority: must
+user_story: 作为负责实现 REQ-010 的人，我要先验证异步导出是否可行以及阈值定在哪，以便避免实现方案返工。
+
+actors:
+  - 实现该需求的开发者
+
+goal: 验证某个不确定性，产出结论
+value: 把 REQ-010 里对性能的高风险假设变成有证据的结论
+source: 会议记录 2026-10-12（企业客户季度需求沟通）
+
+triggers:
+  - REQ-010 进入实现阶段前
+
+main_flow:
+  - 构造一份 12000 行的模拟账单数据
+  - 分别用同步与异步两种方案生成 PDF
+  - 记录请求线程占用、内存峰值与总耗时
+  - 输出结论与推荐阈值
+
+exception_flows:
+  - name: 模拟数据构造失败
+    when: 造数脚本无法生成目标行数
+    steps:
+      - 降级到 6000 行并记录降级原因
+      - 在结论中标注样本规模不足
+
+data:
+  inputs: [模拟账单行数]
+  outputs: [结论, 推荐阈值, 实测数据]
+  entities: []
+  retention: 结论归档到需求 review 记录
+
+permission:
+  - 仅实现该需求的开发者可操作该任务
+  - 探针环境隔离，不触碰生产数据
+
+non_functional:
+  - 探针在隔离环境进行，不产生对外可见影响
+
+acceptance_criteria:
+  - id: AC-020
+    scenario: happy_path
+    requirement_id: REQ-011
+    given: 存在一份 12000 行的模拟账单数据
+    when: 分别执行一次同步导出与一次异步导出
+    then:
+      - 输出一份结论，结论只能是「可行」「不可行」「换方案」三者之一
+      - 结论附实测数据（线程占用、内存峰值、总耗时）
+      - 给出推荐的异步触发阈值
+  - id: AC-021
+    scenario: boundary
+    requirement_id: REQ-011
+    given: 模拟数据行数达到 50000 行上限
+    when: 执行一次异步导出
+    then: 任务在 P95 启动时延 5s 内进入执行状态，或明确给出不可行结论
+
+out_of_scope:
+  - 生产环境实施
+  - PDF 版式调整
+
+dependencies:
+  - REQ-010
+
+assumptions:
+  - 探针结论将回写 REQ-010 的 non_functional 阈值
+
+open_questions:
+  - 若结论为「不可行」，REQ-010 的异步分支如何调整
+
+test_notes:
+  - 本需求的验收标准是「产出结论」而非「产出功能」，不要写「用户可以…」形态的 AC
+
+trace:
+  source: 会议记录 2026-10-12
+  source_type: meeting
+  parent: REQ-010
+  related: []
+  realization: []
+
+updated_at: 2026-10-12
+parent: REQ-010
+history:
+  - v0.1

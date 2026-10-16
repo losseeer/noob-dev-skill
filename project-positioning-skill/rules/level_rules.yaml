@@ -1,0 +1,118 @@
+version: 1
+selection:
+  strategy: highest_matching_level
+  evaluation_order: [L4, L3, L2, L1, L0]
+  no_match: L0
+  rule: "按 evaluation_order 检查，首个命中任一 criterion 的等级生效；不得按信号数量平均。"
+condition_language:
+  field_source: "使用 coverage 或 positioning 的点路径"
+  operators: [eq, in, gte, contains]
+levels:
+  L4:
+    name: 关键或强监管系统
+    criteria:
+      - id: L4-criticality
+        all:
+          - field: criticality
+            operator: eq
+            value: high
+      - id: L4-regulated-data
+        all:
+          - field: data_sensitivity
+            operator: eq
+            value: regulated
+          - field: regulation
+            operator: in
+            value: [strict, mandatory]
+      - id: L4-high-compliance
+        all:
+          - field: compliance
+            operator: eq
+            value: high
+          - field: data_sensitivity
+            operator: in
+            value: [sensitive, regulated]
+  L3:
+    name: 商业或企业系统
+    criteria:
+      - id: L3-enterprise
+        all:
+          - field: enterprise
+            operator: eq
+            value: true
+      - id: L3-contractual-service
+        all:
+          - field: charging
+            operator: eq
+            value: true
+          - field: contractual_obligation
+            operator: eq
+            value: true
+      - id: L3-audit-required
+        all:
+          - field: compliance
+            operator: in
+            value: [medium, high]
+          - field: audit_required
+            operator: eq
+            value: true
+  L2:
+    name: 小规模公开产品
+    criteria:
+      - id: L2-public
+        all:
+          - field: users
+            operator: contains
+            value: public
+      - id: L2-multi-user
+        all:
+          - field: scale
+            operator: gte
+            value: 10
+          - field: criticality
+            operator: in
+            value: [low, medium]
+      - id: L2-paid-low-criticality
+        all:
+          - field: charging
+            operator: eq
+            value: true
+          - field: criticality
+            operator: in
+            value: [none, low]
+  L1:
+    name: 个人或小圈子工具
+    criteria:
+      - id: L1-self
+        all:
+          - field: users
+            operator: contains
+            value: self
+          - field: criticality
+            operator: in
+            value: [none, low]
+      - id: L1-small-circle
+        all:
+          - field: users
+            operator: contains
+            value: friends
+          - field: scale
+            operator: gte
+            value: 2
+          - field: criticality
+            operator: in
+            value: [none, low]
+  L0:
+    name: 实验或一次性验证
+    criteria:
+      - id: L0-experiment
+        all:
+          - field: stage
+            operator: in
+            value: [experiment, prototype]
+          - field: criticality
+            operator: eq
+            value: none
+          - field: charging
+            operator: eq
+            value: false

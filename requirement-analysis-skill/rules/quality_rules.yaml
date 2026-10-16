@@ -1,0 +1,89 @@
+version: 1
+
+scope_note: >-
+  这是需求质量门禁，不是范围门禁。
+  pass 只代表「写得清楚、可以测、可以开工」，不代表「该做」；
+  该不该做由项目定位 Skill 的范围门禁决定。
+
+checks:
+  - id: QC-001
+    name: unambiguous
+    question: 每个断言只有一种读法吗？
+    forbidden_words: [友好, 快速, 稳定, 安全, 合理, 尽量, 等等, 大约, 差不多, 比较好, 相关, 适当, 及时, 高效, 简单, 用户友好的, 尽快]
+    detect: 命中任一模糊词，或出现未被 glossary 定义的代词/简称
+    severity: blocking
+    repair: 替换成可量化描述（数字 + 单位 + 条件），或在 glossary 里补定义
+    fail_action: revise
+
+  - id: QC-002
+    name: testable
+    question: 每条验收标准都能被独立执行并判定通过与否吗？
+    require: [given, when, then]
+    detect: 缺 Given/When/Then 任一要素，或 then 里出现无法观测的断言（如「感觉很快」）
+    severity: blocking
+    repair: 补齐三要素，then 必须描述可观测结果
+    fail_action: revise
+
+  - id: QC-003
+    name: complete
+    question: P0 维度都覆盖了吗？标准场景都考虑了吗？
+    require: [actor, trigger, main_flow, acceptance, exception]
+    mandatory_scenarios: [正常路径, 空数据, 重复操作, 权限不足, 未登录, 网络失败, 边界值]
+    detect: P0 维度缺失，或 mandatory_scenarios 未覆盖且 test_notes 未注明「不适用 + 原因」
+    severity: blocking
+    repair: 补齐维度；不适用的场景必须在 test_notes 写明原因
+    fail_action: revise
+
+  - id: QC-004
+    name: consistent
+    question: 需求内部前后一致吗？与已有需求冲突吗？
+    detect: 命中 rules/conflict_rules.yaml 任一 blocking 规则，或同一 ID/术语在不同位置含义不同
+    severity: blocking
+    repair: 按 conflict_rules 的 resolution 消解，把结论写回 assumption
+    fail_action: revise
+
+  - id: QC-005
+    name: feasible
+    question: 在当前条件下做得出来吗？会有无法验证的假设吗？
+    detect: 存在未验证的高风险依赖（外部系统可用性、算法效果、性能上限）且没有对应探针任务
+    severity: warning
+    repair: 补一个 spike 子需求，或把假设写进 assumptions 并给出验证方法
+    fail_action: revise
+
+  - id: QC-006
+    name: traceable
+    question: 知道它是从哪儿来的吗？
+    require: [source]
+    detect: trace.source 为空或等于 unknown 且未在 open_questions 说明
+    severity: blocking
+    repair: 补全来源；确实找不到时写 unknown 并在 open_questions 显式说明
+    fail_action: revise
+
+  - id: QC-007
+    name: prioritized
+    question: 优先级确定了吗？降级出口写清楚了吗？
+    require: [priority]
+    detect: priority 缺失；或 must 需求缺任一 must_gate 要求的验收标准（见 PRIO-001）
+    severity: blocking
+    repair: 确定 MoSCoW 优先级；wont 的内容写进 out_of_scope（见 PRIO-002）
+    fail_action: revise
+
+decision_mapping:
+  pass: 七个检查项全部无 blocking 失败；允许存在已记录在案的 warning
+  revise: 存在任一 blocking 失败，且失败项数量 ≤ 3，整改后可重跑
+  reject: 任一为 true
+    - blocking 失败项 > 3
+    - actor 与 goal 同时缺失（等于不知道给谁做、为什么做）
+    - 命中 PRIO-003（涉及越权、数据丢失、资金的需求被降级）
+    - 同一份需求连续两轮 revise 后仍有 blocking 失败
+
+output_requirements:
+  - 每个结论必须给出 rule_id、证据位置（YAML path）与修复动作
+  - decision 为 revise / reject 时必须给出 issues 列表与 action 字段
+  - 不得因为「用户赶时间」把 reject 写成 pass；静默降级等同于伪造结论
+  - 无法判定的检查项写 unknown 并说明缺什么信息，不允许默认 pass
+
+recommended_default:
+  review_routing: >-
+    建议先改 contested 项最多的一类（通常是不完整与不可测），
+    一轮改完再重跑；不要在半份草稿上反复跑门禁。

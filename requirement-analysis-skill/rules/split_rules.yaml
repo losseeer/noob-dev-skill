@@ -1,0 +1,82 @@
+version: 1
+
+strategies:
+  - id: user_value
+    name: 按用户价值
+    when: 一个需求里塞了几种不同的价值主张
+    shape: 每个可独立交付的价值点一个子需求
+  - id: workflow_step
+    name: 按流程步骤
+    when: 主流程超过 7 步或出现明显的阶段边界
+    shape: 每个阶段一个子需求，阶段之间以可验证的中间产物衔接
+  - id: data_entity
+    name: 按数据实体
+    when: 涉及多个互不相同的实体，且各自独立增改查删
+    shape: 每个实体的完整 CRUD 一个子需求
+  - id: risk
+    name: 按风险
+    when: 存在未验证的技术或外部依赖
+    shape: 先拆一个 spike（探针）子需求，验证通过后再拆实现子需求
+  - id: acceptance_independence
+    name: 按可独立验收
+    when: 存在可以单独写 Given/When/Then 的部分
+    shape: 能单独写验收的最小单元一个子需求
+
+strategy_priority: [acceptance_independence, user_value, risk, workflow_step, data_entity]
+
+rules:
+  - id: SPL-001
+    name: every_child_independently_acceptable
+    text: 每个子需求必须可独立验收，至少一条 Given/When/Then 只依赖它自身。
+    severity: blocking
+  - id: SPL-002
+    name: every_child_has_actor_and_goal
+    text: 每个子需求必须有明确 actor 与 goal，不允许出现「配合 XXX」这类无主需求。
+    severity: blocking
+  - id: SPL-003
+    name: risk_first_as_spike
+    text: 高风险或不确定项优先拆成 spike，spike 的验收标准是「产出结论」，不是「产出功能」。
+    severity: warning
+  - id: SPL-004
+    name: no_circular_dependency
+    text: 子需求之间不允许出现环形依赖；出现时必须抽公共子需求打断环。
+    severity: blocking
+  - id: SPL-005
+    name: keep_vertical_slice
+    text: 优先按垂直切片（端到端一小条）拆，不按前端/后端/测试这类技术分层拆。
+    severity: warning
+  - id: SPL-006
+    name: child_keeps_trace
+    text: 子需求必须继承父需求的 trace.source，并写 trace.parent。
+    severity: blocking
+  - id: SPL-007
+    name: reasonable_child_count
+    text: 单个父需求建议拆成 2-7 个子需求；超过 7 个说明粒度分错层，建议先按阶段再拆一层。
+    severity: warning
+
+anti_patterns:
+  - name: 按技术分层拆
+    symptom: 子需求叫「前端部分」「后端部分」「接口部分」
+    problem: 每一层都无法独立验收
+    fix: 改成端到端垂直切片
+  - name: 拆出只有调用关系的碎片
+    symptom: 子需求只有一行「调用 XX 服务」
+    problem: 没有 actor 与 goal，违反 SPL-002
+    fix: 合并到依赖它的那个子需求
+  - name: 拆完还是一个大需求
+    symptom: 子需求数量 1
+    problem: 说明没真拆
+    fix: 回到 strategies 重新选策略
+  - name: spike 写成了功能需求
+    symptom: spike 的验收标准里出现「用户可以…」
+    problem: spike 的产出是结论不是功能
+    fix: 验收改成「输出结论文档 + 推荐方案」
+
+spike_template:
+  goal: 验证某个不确定性，产出结论
+  acceptance_shape: Given 待验证假设 / When 完成 <探针动作> / Then 输出结论与推荐方案
+  exit: 结论为「可行」「不可行」「换方案」三者之一，且附证据
+
+recommended_default:
+  默认使用 acceptance_independence 作为第一策略；
+  若一次拆出超过 7 个子需求，改用 strategy_priority 的下一个策略重新拆。

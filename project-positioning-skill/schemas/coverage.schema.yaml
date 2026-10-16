@@ -1,0 +1,211 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://example.local/project-positioning/coverage.schema.yaml"
+title: Project positioning coverage matrix
+type: object
+additionalProperties: false
+required:
+  - version
+  - as_of
+  - coverage
+  - questions
+  - skipped
+  - defaults_applied
+properties:
+  version:
+    const: 1
+  as_of:
+    type: string
+    format: date
+  coverage:
+    type: array
+    minItems: 1
+    items:
+      $ref: "#/$defs/coverage_item"
+  questions:
+    type: array
+    items:
+      $ref: "#/$defs/question"
+  skipped:
+    type: array
+    items:
+      $ref: "#/$defs/skipped_item"
+  defaults_applied:
+    type: array
+    items:
+      $ref: "#/$defs/default_item"
+$defs:
+  value:
+    oneOf:
+      - type: "null"
+      - type: boolean
+      - type: number
+      - type: string
+      - type: array
+      - type: object
+  evidence:
+    type: object
+    additionalProperties: false
+    required: [source, excerpt]
+    properties:
+      source:
+        type: string
+        minLength: 1
+      excerpt:
+        type: string
+        minLength: 1
+  coverage_item:
+    type: object
+    additionalProperties: false
+    required: [dimension, priority, status, value, evidence]
+    properties:
+      dimension:
+        enum:
+          - users
+          - scale
+          - charging
+          - data
+          - data_sensitivity
+          - compliance
+          - criticality
+          - delivery
+          - stage
+          - maintenance
+          - budget
+          - form
+          - regulation
+          - downtime
+          - data_loss
+          - enterprise
+          - contractual_obligation
+          - audit_required
+          - auth
+          - experience
+          - rewrite
+          - i18n
+      priority:
+        enum: [P0, P1, P2]
+      status:
+        enum: [explicit, inferred, missing, low_confidence, conflict, undecided]
+      value:
+        $ref: "#/$defs/value"
+      evidence:
+        type: array
+        items:
+          $ref: "#/$defs/evidence"
+      reason:
+        type: string
+      confidence:
+        type: number
+        minimum: 0
+        maximum: 1
+      rule_id:
+        type: string
+      review_trigger:
+        type: string
+    allOf:
+      - if:
+          properties:
+            status:
+              enum: [explicit, inferred, low_confidence, conflict, undecided]
+          required: [status]
+        then:
+          properties:
+            evidence:
+              minItems: 1
+      - if:
+          properties:
+            status:
+              const: inferred
+          required: [status]
+        then:
+          required: [reason, confidence]
+      - if:
+          properties:
+            status:
+              const: conflict
+          required: [status]
+        then:
+          properties:
+            evidence:
+              minItems: 2
+      - if:
+          properties:
+            status:
+              const: missing
+          required: [status]
+        then:
+          properties:
+            value:
+              type: "null"
+            evidence:
+              maxItems: 0
+      - if:
+          required: [rule_id]
+        then:
+          required: [reason, review_trigger]
+      - if:
+          properties:
+            status:
+              const: undecided
+          required: [status]
+        then:
+          required: [review_trigger]
+  question:
+    type: object
+    additionalProperties: false
+    required: [id, dimension, priority, reason, prompt, options]
+    properties:
+      id:
+        type: string
+        pattern: "^Q[0-9]+$"
+      dimension:
+        type: string
+      priority:
+        enum: [P0, P1, P2]
+      reason:
+        type: string
+        minLength: 1
+      prompt:
+        type: string
+        minLength: 1
+      options:
+        type: array
+        minItems: 2
+        maxItems: 4
+        items:
+          type: object
+          additionalProperties: false
+          required: [label, value, impact]
+          properties:
+            label:
+              type: string
+            value:
+              $ref: "#/$defs/value"
+            impact:
+              type: string
+      recommendation:
+        $ref: "#/$defs/value"
+  skipped_item:
+    type: object
+    additionalProperties: false
+    required: [dimension, reason]
+    properties:
+      dimension:
+        type: string
+      reason:
+        type: string
+  default_item:
+    type: object
+    additionalProperties: false
+    required: [dimension, value, rule_id, reason, review_trigger]
+    properties:
+      dimension:
+        type: string
+      value:
+        $ref: "#/$defs/value"
+      rule_id:
+        type: string
+      reason:
+        type: string
+      review_trigger:
+        type: string
