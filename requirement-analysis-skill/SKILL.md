@@ -34,7 +34,10 @@ description: Convert fuzzy ideas, user feedback, issues, chat logs, or code comm
 
 按以下顺序路由：
 
-1. 用户仅询问概念、方案或某需求是否值得做时，只回答问题，不写文件。
+1. **纯打听类不归本 Skill，本条只作误路由兜底**：用户只是问某个概念什么意思、
+   某个技术方案怎么看、或某个需求**值不值得做**，正确归属见下方裁决表
+   （依次为 `dev-companion` / `solution-design-skill` / `project-positioning-skill`）。
+   若已被路由进来 → 只回答，不写文件。
 2. 已有需求产物且用户提出修改、追加、删减时，执行**变更管理**（步骤 8）。
 3. 已有需求产物且用户要求 review 或评审时，执行**质量门禁**（步骤 6）+ review 文档。
 4. 已有通过门禁的需求卡，用户要求排期或开发顺序时，执行**拆分与计划**（步骤 7）。

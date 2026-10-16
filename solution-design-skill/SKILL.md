@@ -38,9 +38,9 @@ description: Turn accepted requirements into a reviewable technical solution and
 
 按顺序路由：
 
-1. 用户只是打听某个技术怎么选、某个架构怎么看，**没说要开工** → 直接回答，不写文件、
-   不启动本 Skill 的流程。这类纯解释请求归 `dev-companion` 的能力 B。
-   本条的作用是保证不出现「两边都把自己排除掉」的真空。
+1. **纯打听类不归本 Skill，本条只作误路由兜底**：用户只是问某个技术怎么选、
+   某个架构怎么看、某个概念什么意思，**没说要开工** → 归 `dev-companion` 的能力 B，
+   详见下方裁决表。若已被路由进来 → 只回答，不写文件，不启动本 Skill 的流程。
 2. 已有设计方案且用户提出修改 → 走**步骤 4-8**，并递增版本号，不覆盖历史。
 3. 已有设计方案且用户要求 review → 走**步骤 6**，出 review 记录。
 4. 已有设计方案且用户要原型 → 只走**步骤 7**。
@@ -49,7 +49,7 @@ description: Turn accepted requirements into a reviewable technical solution and
 **变窄规则**：用户只要求其中一步（例如「只做技术选型」），只执行该步，
 其余产出在 `current.yaml` 里标 `gap` 并显式告知，不静默补跑全流程。
 
-## 与相邻 Skill 的归属裁决
+## 相邻 Skill 的归属裁决
 
 平台只靠 `description` 路由，四个 Skill 同时装必然有边界模糊的请求。路由层判不清时按下面裁决：
 
@@ -58,7 +58,7 @@ description: Turn accepted requirements into a reviewable technical solution and
 | 「用 A 还是 B 实现」——技术选型本身 | **本 Skill**，产出 `stack.yaml` + ADR |
 | 「先做哪个任务」「下一步干嘛」——选型已定后的排序 | `dev-companion`（本轮还在做选型时除外） |
 | 「做个能点的 demo」「画个原型」 | **本 Skill**，原型登记进 `current.yaml`，不是一次性产物 |
-| 写完就扔的一次性临时脚本 | 两边都不建树；它不属于任何一方的能力范围 |
+| 写完就扔的一次性临时脚本 | `dev-companion`：仍用能力 B/C 回答，但**不建树**；它不是任何 Skill 的设计产物 |
 | 「这是什么意思」「用大白话讲讲」——只解释不落文件 | `dev-companion`（能力 B），本 Skill 不接 |
 | 「这个技术方案该怎么设计」——要出产物 | **本 Skill** |
 | 正在开发中且已有 `dev-tree/TREE.md` 当前活动节点，问下一步 | 让位给 `dev-companion`，本 Skill 不接 |

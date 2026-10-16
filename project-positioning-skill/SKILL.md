@@ -11,7 +11,9 @@ description: This skill should be used when starting a software project, reviewi
 
 按以下顺序路由：
 
-1. 用户仅询问概念或方案时，只回答问题，不写文件。
+1. **纯打听类不归本 Skill，本条只作误路由兜底**：若用户只是问某个概念什么意思、
+   某个技术方案怎么看，应先去 `dev-companion`（概念解释）或 `solution-design-skill`
+   （技术方案），详见下方裁决表。若已被路由进来 → 只回答，不写文件。
 2. 已有 `.project/positioning/current.yaml` 且用户提出单个新需求时，执行需求门禁。
 3. 已有定位卡，且命中 `reposition_triggers` 或用户明确要求改变定位时，执行重定位。
 4. 用户要求 review 现有定位时，执行定位 review。
