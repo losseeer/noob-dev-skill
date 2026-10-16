@@ -1,0 +1,35 @@
+version: 1
+
+# review 的七项检查。每项都要落到 reviews/*.yaml 的 checks 数组里，passed 必须是显式布尔值。
+checks:
+  - id: C1
+    item: 每条选型的 basis 都可追溯（constraint / requirement 都给了 source_ref）
+    how: 逐条看 stack.yaml 的 selections，basis 不是 assumption 的必须有 source_ref
+  - id: C2
+    item: 所有 assumption 都写了 impact_if_wrong 与 mitigation
+    how: current.yaml 的 assumptions + stack.yaml 里 basis=assumption 的条目
+  - id: C3
+    item: 上游每条 AC 在 coverage 里都有登记，且没有标 covered 却无人认领的
+    how: 跑 scripts/validate_bundle.py，交叉引用检查会兜住这一项
+  - id: C4
+    item: 上游 constraints 与本方案的冲突已全部处置
+    how: 逐条比 rules/constraint_rules.yaml，看 current.yaml 的 constraint_conflicts
+  - id: C5
+    item: 数据模型的每个字段都能追到需求，或显式标注 derived / assumption
+    how: data-model.yaml 的 fields.basis
+  - id: C6
+    item: 每个 http 接口的错误分支覆盖了对应 AC 里的异常场景
+    how: interfaces.yaml 的 errors 与 requirement 的 exception_flows 对照
+  - id: C7
+    item: 涉及 UI 时，每个页面能落到至少一条 REQ
+    how: current.yaml prototype.pages[].covers；没有 prototype 时该项标 passed 并注明不适用
+
+decision_rules:
+  approve: 七项全 passed 且无 blocker → status_after: reviewed
+  request_changes: 有任一项 failed → 保持 draft，列出整改项
+  insufficient_evidence: 选型的性状无法判定（例如没读过现有代码就定了框架）→ 保持 draft，先补最小事实
+  blocker_finding: 只要 findings 里有 severity: blocker，decision 不得为 approve
+
+hard_rules:
+  - review 不得在缺 C3（未跑 bundle 校验）的情况下给 approve。
+  - 校验脚本不可用、数据读不到，一律显式报告，不得写成 C3 passed。

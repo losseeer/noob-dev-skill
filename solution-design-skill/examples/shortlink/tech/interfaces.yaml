@@ -1,0 +1,80 @@
+version: 1
+protocol_note: HTTP/1.1，JSON 编码；页面路由由 FastAPI 的静态文件挂载提供
+interfaces:
+  - id: IF-001
+    name: 创建短链
+    kind: http
+    method: POST
+    path: /api/links
+    request:
+      - name: target_url
+        type: string
+        required: true
+        constraint: http 或 https 开头的合法 URL
+        source: REQ-001 主流程
+    response:
+      - name: code
+        type: string
+        constraint: base62，4 到 12 位
+      - name: short_url
+        type: string
+      - name: reused
+        type: boolean
+        note: true 表示命中了 AC-002 的复用分支
+    errors:
+      - code: 400_INVALID_URL
+        when: target_url 非法
+        acceptance_ref: AC-001
+    source_refs: [REQ-001]
+    acceptance_refs: [AC-001, AC-002]
+    note: 复用靠 target_url 的 unique 索引先查后插
+  - id: IF-002
+    name: 短码跳转
+    kind: http
+    method: GET
+    path: /{code}
+    request:
+      - name: code
+        type: string
+        required: true
+        constraint: 路径参数
+    response:
+      - name: Location
+        type: string
+        constraint: 302 响应头
+    errors:
+      - code: 404_NOT_FOUND
+        when: code 在 links 表里不存在
+        response_note: 返回 404 页面，不做重定向
+        acceptance_ref: AC-011
+    source_refs: [REQ-002]
+    acceptance_refs: [AC-010, AC-011]
+    note: 成功分支同时把 click_count 加一
+  - id: IF-003
+    name: 查询点击统计
+    kind: http
+    method: GET
+    path: /api/links/{code}/stats
+    request:
+      - name: code
+        type: string
+        required: true
+    response:
+      - name: code
+        type: string
+      - name: click_count
+        type: integer
+    errors:
+      - code: 404_NOT_FOUND
+        when: code 不存在
+    source_refs: [REQ-003]
+    acceptance_refs: [AC-020]
+  - id: IF-004
+    name: 短链生成页
+    kind: page
+    page_ref: prototype/index.html
+    request: []
+    response: []
+    source_refs: [REQ-001]
+    acceptance_refs: [AC-001]
+    note: 原型页面，供 review 交互行为，不进后端路由校验

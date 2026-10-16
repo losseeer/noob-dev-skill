@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>短链服务 · 交互原型</title>
+<style>
+  :root {
+    --bg: #f5f5f7;
+    --card: #ffffff;
+    --text: #1d1d1f;
+    --muted: #6e6e73;
+    --line: #d2d2d7;
+    --accent: #0071e3;
+    --ok: #12864a;
+    --warn: #a8540a;
+    --err: #d70015;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 40px 20px;
+    background: var(--bg); color: var(--text);
+    font: 14px/1.6 -apple-system, BlinkMacSystemFont, "SF Pro SC", "PingFang SC", sans-serif;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  h1 { font-size: 22px; font-weight: 500; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 28px; font-size: 13px; }
+  .card {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 12px; padding: 20px; margin-bottom: 16px;
+  }
+  label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+  input {
+    width: 100%; padding: 10px 12px; font-size: 14px;
+    border: 1px solid var(--line); border-radius: 8px; background: #fff;
+  }
+  input:focus { outline: 2px solid var(--accent); outline-offset: -1px; border-color: transparent; }
+  .row { display: flex; gap: 8px; align-items: stretch; }
+  button {
+    padding: 10px 18px; font-size: 14px; border-radius: 8px; cursor: pointer;
+    border: 1px solid transparent; background: var(--accent); color: #fff;
+    white-space: nowrap;
+  }
+  button.ghost { background: #fff; color: var(--accent); border-color: var(--accent); }
+  button.tiny { padding: 4px 10px; font-size: 12px; }
+  .msg { margin-top: 10px; font-size: 13px; min-height: 20px; }
+  .msg.err { color: var(--err); }
+  .msg.ok { color: var(--ok); }
+  .msg.warn { color: var(--warn); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-weight: 400; }
+  td code { background: #f0f0f2; padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+  .badge {
+    display: inline-block; padding: 1px 7px; border-radius: 20px;
+    font-size: 11px; background: #fff2e0; color: var(--warn);
+  }
+  .empty { color: var(--muted); font-size: 13px; padding: 8px 0; }
+  .foot { color: var(--muted); font-size: 12px; margin-top: 24px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>短链服务</h1>
+  <p class="sub">交互原型 · 行为对应 IF-001 / IF-002 / IF-003，数据在内存里，刷新即清空</p>
+
+  <div class="card">
+    <label for="url">原始 URL</label>
+    <div class="row">
+      <input id="url" placeholder="https://example.com/a/very/long/path" autocomplete="off">
+      <button onclick="create()">生成短链</button>
+    </div>
+    <div id="msg" class="msg"></div>
+  </div>
+
+  <div class="card">
+    <label>已生成</label>
+    <div id="list"><div class="empty">还没有短链</div></div>
+  </div>
+
+  <div class="card">
+    <label for="probe">短码跳转模拟（IF-002）</label>
+    <div class="row">
+      <input id="probe" placeholder="输入一个短码试试，例如 aB3d" autocomplete="off">
+      <button class="ghost" onclick="probe()">访问</button>
+    </div>
+    <div id="probe-msg" class="msg"></div>
+  </div>
+
+  <p class="foot">
+    未覆盖的分支留白，等你 review：错误态只有 URL 非法一种，其余异常（网络失败、并发冲突）尚未给出交互表达。
+  </p>
+</div>
+
+<script>
+  const store = new Map();
+  let seq = 0;
+  const B62 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+
+  function toBase62(n) {
+    if (n === 0) return B62[0];
+    let s = "";
+    while (n > 0) { s = B62[n % 62] + s; n = Math.floor(n / 62); }
+    return s.padStart(4, B62[0]);
+  }
+
+  function isValidUrl(v) {
+    try {
+      const u = new URL(v);
+      return u.protocol === "http:" || u.protocol === "https:";
+    } catch (e) { return false; }
+  }
+
+  function esc(value) {
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function setMsg(id, text, kind) {
+    const el = document.getElementById(id);
+    el.textContent = text;
+    el.className = "msg" + (kind ? " " + kind : "");
+  }
+
+  function create() {
+    const raw = document.getElementById("url").value.trim();
+    if (!raw) { setMsg("msg", "请先填写 URL", "err"); return; }
+    if (!isValidUrl(raw)) { setMsg("msg", "400_INVALID_URL：只接受 http 或 https", "err"); return; }
+
+    let reused = false;
+    let entry = null;
+    for (const e of store.values()) {
+      if (e.target === raw) { entry = e; reused = true; break; }
+    }
+    if (!entry) {
+      const code = toBase62(++seq);
+      entry = { code, target: raw, clicks: 0 };
+      store.set(code, entry);
+    }
+    setMsg("msg", reused ? "命中复用分支（AC-002）：" + entry.code : "生成成功（AC-001）：" + entry.code, reused ? "warn" : "ok");
+    document.getElementById("url").value = "";
+    render();
+  }
+
+  function visit(code, quiet) {
+    const entry = store.get(code);
+    if (!entry) {
+      if (!quiet) setMsg("probe-msg", "404_NOT_FOUND：未知短码，不做重定向（AC-011）", "err");
+      return false;
+    }
+    entry.clicks += 1;
+    render();
+    if (!quiet) setMsg("probe-msg", "302 → " + entry.target + "，计数加一（AC-010 / AC-020）", "ok");
+    return true;
+  }
+
+  function probe() {
+    const code = document.getElementById("probe").value.trim();
+    if (!code) { setMsg("probe-msg", "请输入短码", "err"); return; }
+    visit(code, false);
+  }
+
+  function render() {
+    const box = document.getElementById("list");
+    if (store.size === 0) { box.innerHTML = '<div class="empty">还没有短链</div>'; return; }
+    let html = '<table><tr><th>短码</th><th>目标</th><th>点击</th><th></th></tr>';
+    for (const e of store.values()) {
+      const short = e.target.length > 34 ? e.target.slice(0, 34) + '…' : e.target;
+      html += '<tr><td><code>' + esc(e.code) + '</code></td>'
+           +  '<td title="' + esc(e.target) + '">' + esc(short) + '</td>'
+           +  '<td>' + e.clicks + '</td>'
+           +  '<td><button class="ghost tiny" onclick="visit(\'' + esc(e.code) + '\', true)">模拟访问</button></td></tr>';
+    }
+    box.innerHTML = html + '</table>';
+  }
+
+  document.getElementById("url").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") create();
+  });
+  document.getElementById("probe").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") probe();
+  });
+</script>
+</body>
+</html>

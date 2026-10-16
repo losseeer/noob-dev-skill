@@ -1,0 +1,50 @@
+version: 1
+reviewed_at: 2026-10-16
+reviewer: solution-design-skill
+design_version: v0.1
+decision: approve
+checks:
+  - id: C1
+    item: 每条选型的 basis 都可追溯
+    passed: true
+    evidence_ref: tech/stack.yaml
+    note: 7 条选型全部带 basis，constraint 与 requirement 型都给了 source_ref
+  - id: C2
+    item: 所有 assumption 都写了 impact_if_wrong 与 mitigation
+    passed: true
+    evidence_ref: current.yaml ASM-001
+  - id: C3
+    item: 上游每条 AC 在 coverage 里有登记且都有出处认领
+    passed: true
+    evidence_ref: scripts/validate_bundle.py
+    note: 交叉引用检查通过后才下的这个结论
+  - id: C4
+    item: 上游 constraints 与本方案的冲突已全部处置
+    passed: true
+    evidence_ref: current.yaml CONF-001
+    note: budget=low 与托管存储冲突，已换 SQLite 并记为 resolved
+  - id: C5
+    item: 数据模型字段可追溯或显式标注 derived / assumption
+    passed: true
+    evidence_ref: tech/data-model.yaml
+  - id: C6
+    item: http 接口的错误分支覆盖了对应 AC 的异常场景
+    passed: true
+    evidence_ref: tech/interfaces.yaml IF-001, IF-002
+  - id: C7
+    item: 涉及 UI 时页面能落到至少一条 REQ
+    passed: true
+    evidence_ref: current.yaml prototype.pages
+findings:
+  - severity: minor
+    description: Q1（短码别名）未答复，当前按不支持实现
+    disposition: deferred
+    note: 用户答复前不影响主体流程
+  - severity: minor
+    description: 短码可枚举（ASM-001）在敏感链接场景下会成为安全问题
+    disposition: accepted_risk
+    evidence_ref: ADR-001
+    note: 复审条件已写进 ADR，出现账号体系时立即回改
+unresolved_assumptions: [ASM-001]
+status_after: reviewed
+summary: 方案自洽，可交给 dev-companion 拆解实施。两条 minor 已记录，其中短码可枚举需盯复审条件。

@@ -1,0 +1,72 @@
+version: 1
+as_of: 2026-10-16
+selections:
+  - id: SEL-001
+    area: language
+    choice: Python 3.12
+    basis: user_choice
+    source_ref: 项目根目录 pyproject.toml
+    confidence: high
+    risk_level: low
+    note: 跟随现有栈，不是本轮新增决策
+  - id: SEL-002
+    area: framework
+    choice: FastAPI
+    basis: user_choice
+    source_ref: 同 pyproject.toml
+    decision_ref: ADR-001
+    confidence: high
+    alternatives:
+      - name: Flask
+        rejected_because: 需要额外装 Swagger 插件才能拿到 OpenAPI
+        would_reconsider_when: 项目已有 Flask 中间件生态时
+    note: 自带 OpenAPI，接口清单能直接验证
+  - id: SEL-003
+    area: storage
+    choice: SQLite
+    basis: constraint
+    source_ref: constraints.budget_low
+    decision_ref: ADR-001
+    locked_by_constraint: true
+    confidence: high
+    cost_note: 零成本，零运维
+    risk_level: medium
+    alternatives:
+      - name: 托管型 KV 存储
+        rejected_because: 与 budget=low 冲突，见 CONF-001
+    note: 并发写场景出现前不做迁移
+  - id: SEL-004
+    area: cache
+    choice: 不引入
+    basis: requirement
+    source_ref: 需求文档没有任何性能类验收标准
+    confidence: medium
+    revisit_when: 出现响应时间类 AC 时
+    note: 没有实测数据就不加缓存
+  - id: SEL-005
+    area: frontend
+    choice: 纯 HTML 单文件 + CDN
+    basis: user_choice
+    confidence: high
+    note: 用户在选型时明确选择这项，理由是可双击打开直接 review
+  - id: SEL-006
+    area: state
+    choice: 自增 ID 转 base62 作为短码
+    basis: assumption
+    why_assumed: 需求里没有任何关于短码不可枚举的要求
+    revisit_when: 引入账号体系或敏感链接场景时
+    confidence: low
+    risk_level: medium
+    decision_ref: ADR-001
+    alternatives:
+      - name: 随机短码
+        rejected_because: 需要额外的碰撞重试逻辑，收益在需求里没有依据
+        would_reconsider_when: 出现不可枚举的验收标准时
+    note: 与 ASM-001 联动
+  - id: SEL-007
+    area: observability
+    choice: stdout 结构化日志 + /healthz
+    basis: constraint
+    source_ref: rules/stack_rules.yaml area_defaults.observability
+    confidence: high
+    risk_level: low

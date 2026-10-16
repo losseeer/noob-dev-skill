@@ -1,0 +1,89 @@
+name: solution-check
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Resolve skill path
+        id: skill
+        run: |
+          if [ -d "solution-design-skill" ]; then
+            echo "path=solution-design-skill" >> "$GITHUB_OUTPUT"
+          elif [ -d ".skills/solution-design" ]; then
+            echo "path=.skills/solution-design" >> "$GITHUB_OUTPUT"
+          else
+            echo "Skill directory not found" >&2
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: python -m pip install -r "${{ steps.skill.outputs.path }}/scripts/requirements.txt"
+
+      - name: Check the checker itself
+        working-directory: ${{ steps.skill.outputs.path }}/scripts
+        run: python validate_bundle.py --selftest
+
+      - name: Validate bundled examples and cross references
+        working-directory: ${{ steps.skill.outputs.path }}/scripts
+        run: python validate_bundle.py
+
+      - name: Validate every design artifact
+        run: |
+          set -eu
+          SKILL="${{ steps.skill.outputs.path }}"
+          check() {
+            kind="$1"; shift
+            for f in "$@"; do
+              [ -e "$f" ] || continue
+              python "$SKILL/scripts/validate_artifact.py" "$kind" "$f"
+            done
+          }
+          check current     .project/design/current.yaml "$SKILL"/examples/*/current.yaml
+          check stack       .project/design/tech/stack.yaml "$SKILL"/examples/*/tech/stack.yaml
+          check data_model  .project/design/tech/data-model.yaml "$SKILL"/examples/*/tech/data-model.yaml
+          check interfaces  .project/design/tech/interfaces.yaml "$SKILL"/examples/*/tech/interfaces.yaml
+          check review      .project/design/reviews/*.yaml "$SKILL"/examples/*/reviews/*.yaml
+
+      - name: Assumption-based selections must declare why and when to revisit
+        run: |
+          set -eu
+          python - <<'PY'
+          import glob, sys
+          import yaml
+
+          failures = []
+          for path in glob.glob(".project/design/tech/stack.yaml"):
+              with open(path, encoding="utf-8") as handle:
+                  data = yaml.safe_load(handle)
+              for sel in data.get("selections", []):
+                  if sel.get("basis") != "assumption":
+                      continue
+                  missing = [k for k in ("why_assumed", "revisit_when") if not sel.get(k)]
+                  if missing:
+                      failures.append(f"{path}:{sel.get('id')} missing {', '.join(missing)}")
+
+          for path in glob.glob(".project/design/current.yaml"):
+              with open(path, encoding="utf-8") as handle:
+                  data = yaml.safe_load(handle)
+              for asm in data.get("assumptions", []):
+                  if not asm.get("mitigation"):
+                      failures.append(f"{path}:{asm.get('id')} has impact_if_wrong but no mitigation")
+
+          if failures:
+              print("Assumption traceability check failed:", file=sys.stderr)
+              for item in failures:
+                  print(f"- {item}", file=sys.stderr)
+              raise SystemExit(1)
+          print("Assumption traceability check passed.")
+          PY

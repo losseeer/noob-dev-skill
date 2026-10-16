@@ -1,0 +1,84 @@
+version: 1
+as_of: 2026-10-16
+project: shortlink
+upstream:
+  positioning:
+    status: found
+    ref: .project/positioning/current.yaml
+    fields_read: [constraints, non_functional_priority, criticality]
+    note: criticality 为 low、scale 为 small，据此锁定本地单实例存储
+  requirements:
+    status: found
+    ref: .project/requirements/requirements/
+    fields_read: [REQ-001, REQ-002, REQ-003]
+summary: 短链服务的技术方案——单实例 SQLite 存储、base62 短码、纯 HTML 原型供 review
+stack_ref: tech/stack.yaml
+constraint_conflicts:
+  - id: CONF-001
+    severity: major
+    source_constraint: constraints.budget_low
+    conflicting_selection: 原定使用托管型 KV 存储
+    description: 定位卡 budget 为 low，禁止引入按量付费的托管服务
+    disposition: resolved
+    note: 改为 SQLite 本地存储，见 SEL-003 与 ADR-001
+coverage:
+  - acceptance_ref: AC-001
+    requirement_ref: REQ-001
+    status: covered
+    covered_by:
+      interfaces: [IF-001]
+      decisions: [ADR-001]
+    note: 创建短链成功后返回短码
+  - acceptance_ref: AC-002
+    requirement_ref: REQ-001
+    status: covered
+    covered_by:
+      interfaces: [IF-001]
+      entities: [links.code]
+    note: 同一长 URL 重复提交复用既有短码，靠 links.code unique 约束保证
+  - acceptance_ref: AC-010
+    requirement_ref: REQ-002
+    status: covered
+    covered_by:
+      interfaces: [IF-002]
+    note: 访问短码 302 跳转
+  - acceptance_ref: AC-011
+    requirement_ref: REQ-002
+    status: covered
+    covered_by:
+      interfaces: [IF-002]
+    note: 未知短码返回 404
+  - acceptance_ref: AC-020
+    requirement_ref: REQ-003
+    status: covered
+    covered_by:
+      interfaces: [IF-003]
+      entities: [links.click_count]
+    note: 每次跳转计数加一
+decisions:
+  - ADR-001
+prototype:
+  needed: true
+  stack: html
+  rationale: 项目无既有前端栈，纯 HTML 单文件零构建，双击即可 review
+  validation_exempt: true
+  pages:
+    - name: 短链生成页
+      file: index.html
+      covers: [REQ-001, REQ-003]
+      review_status: pending
+open_questions:
+  - id: Q1
+    question: 短码是否需要支持用户自定义的别名
+    recommendation: 本期不支持，别名会引入占用与抢注问题
+    blocks: [REQ-001]
+    note: 用户尚未答复
+assumptions:
+  - id: ASM-001
+    statement: 短码可被枚举是可以接受的
+    why_assumed: 需求文档里没有任何「短码不可猜测」的验收标准
+    impact_if_wrong: 若实际用于敏感链接，枚举会导致信息泄露
+    mitigation: AC-011 明确未知短码返回 404；上线前若引入敏感场景需回改为随机短码
+    revisit_when: 接入账号体系或出现敏感链接需求时
+review_ref: reviews/2026-10-16-v0.1.yaml
+status: reviewed

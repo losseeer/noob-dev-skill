@@ -1,0 +1,218 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://example.local/solution-design/current.schema.yaml"
+title: Solution design index
+type: object
+additionalProperties: false
+required:
+  - version
+  - as_of
+  - project
+  - upstream
+  - summary
+  - coverage
+  - decisions
+  - assumptions
+  - status
+properties:
+  version:
+    const: 1
+  as_of:
+    type: string
+    format: date
+  project:
+    type: string
+    minLength: 1
+  upstream:
+    $ref: "#/$defs/upstream_refs"
+  summary:
+    type: string
+    minLength: 1
+  stack_ref:
+    type: string
+  constraint_conflicts:
+    type: array
+    items:
+      $ref: "#/$defs/conflict"
+  coverage:
+    type: array
+    minItems: 1
+    items:
+      $ref: "#/$defs/coverage_item"
+  decisions:
+    type: array
+    items:
+      type: string
+      pattern: "^ADR-[0-9]{3}"
+  prototype:
+    $ref: "#/$defs/prototype"
+  open_questions:
+    type: array
+    items:
+      $ref: "#/$defs/open_question"
+  assumptions:
+    type: array
+    items:
+      $ref: "#/$defs/assumption"
+  review_ref:
+    type: string
+  status:
+    enum: [draft, reviewed, approved, changed, superseded]
+$defs:
+  upstream_refs:
+    type: object
+    additionalProperties: false
+    required: [positioning, requirements]
+    properties:
+      positioning:
+        $ref: "#/$defs/upstream_ref"
+      requirements:
+        $ref: "#/$defs/upstream_ref"
+  upstream_ref:
+    type: object
+    additionalProperties: false
+    required: [status]
+    properties:
+      status:
+        enum: [found, not_found, skipped]
+      ref:
+        type: string
+      fields_read:
+        type: array
+        items:
+          type: string
+      note:
+        type: string
+  conflict:
+    type: object
+    additionalProperties: false
+    required: [id, severity, description, disposition]
+    properties:
+      id:
+        type: string
+        pattern: "^CONF-[0-9]{3}$"
+      severity:
+        enum: [blocker, major, minor]
+      source_constraint:
+        type: string
+      conflicting_selection:
+        type: string
+      description:
+        type: string
+        minLength: 1
+      disposition:
+        enum: [resolved, accepted_risk, escalated_to_positioning, open]
+      note:
+        type: string
+  coverage_item:
+    type: object
+    additionalProperties: false
+    required: [acceptance_ref, status, covered_by]
+    properties:
+      acceptance_ref:
+        type: string
+        pattern: "^AC-[0-9]{3}$"
+      requirement_ref:
+        type: string
+        pattern: "^REQ-[0-9]{3}$"
+      status:
+        enum: [covered, partial, gap, skipped]
+      covered_by:
+        $ref: "#/$defs/ref_list"
+      note:
+        type: string
+  ref_list:
+    type: object
+    additionalProperties: false
+    properties:
+      interfaces:
+        type: array
+        items:
+          type: string
+          pattern: "^IF-[0-9]{3}$"
+      entities:
+        type: array
+        items:
+          type: string
+      pages:
+        type: array
+        items:
+          type: string
+      decisions:
+        type: array
+        items:
+          type: string
+          pattern: "^ADR-[0-9]{3}$"
+  open_question:
+    type: object
+    additionalProperties: false
+    required: [id, question, blocks]
+    properties:
+      id:
+        type: string
+        pattern: "^Q[0-9]+$"
+      question:
+        type: string
+        minLength: 1
+      recommendation:
+        type: string
+      note:
+        type: string
+      blocks:
+        type: array
+        minItems: 1
+        items:
+          type: string
+  assumption:
+    type: object
+    additionalProperties: false
+    required: [id, statement, impact_if_wrong]
+    properties:
+      id:
+        type: string
+        pattern: "^ASM-[0-9]{3}$"
+      statement:
+        type: string
+        minLength: 1
+      why_assumed:
+        type: string
+      impact_if_wrong:
+        type: string
+        minLength: 1
+      mitigation:
+        type: string
+      revisit_when:
+        type: string
+  prototype:
+    type: object
+    additionalProperties: false
+    required: [needed]
+    properties:
+      needed:
+        type: boolean
+      stack:
+        enum: [html, vue, react, none]
+      rationale:
+        type: string
+      pages:
+        type: array
+        items:
+          $ref: "#/$defs/page"
+      validation_exempt:
+        type: boolean
+  page:
+    type: object
+    additionalProperties: false
+    required: [name, file]
+    properties:
+      name:
+        type: string
+        minLength: 1
+      file:
+        type: string
+        minLength: 1
+      covers:
+        type: array
+        items:
+          type: string
+      review_status:
+        enum: [pending, reviewed, needs_change]

@@ -1,0 +1,47 @@
+version: 1
+
+# 上游 constraints 与设计选型之间的冲突检测。
+# LLM 逐条比对；命中后写进 current.yaml 的 constraint_conflicts，disposition 必须落地。
+conflict_rules:
+  - id: CR-001
+    when: criticality 为 high 或 downtime 容忍为 0
+    requires: 单点故障已被排除（多副本或可快速重建）
+    severity: blocker
+    field: locked_by_constraint
+  - id: CR-002
+    when: data_loss 容忍为 0
+    requires: 有持久化的备份或 WAL 策略
+    severity: blocker
+    field: storage_area
+  - id: CR-003
+    when: data_sensitivity 为 personal_sensitive 或 compliance 非 none
+    requires: 静态加密 + 访问审计，禁止明文日志
+    severity: blocker
+    field: [storage_area, observability_area]
+  - id: CR-004
+    when: budget 为 low
+    requires: 不得引入按量付费的托管服务
+    severity: major
+    field: deployment_area
+  - id: CR-005
+    when: scale 为 high
+    requires: 无状态化，会话不能只放进程内存
+    severity: major
+    field: [deployment_area, auth_area]
+  - id: CR-006
+    when: i18n 为 true
+    requires: UI 文案外置，不得硬编码中文字符串
+    severity: minor
+    field: frontend_area
+
+# 冲突的处置只有四种，不存在第五种「先这样吧」
+dispositions:
+  - resolved: 换选型，重新走一遍 stack.yaml
+  - accepted_risk: 用户明知代价并接受，必须写进 review 的 findings
+  - escalated_to_positioning: 约束本身不合理，交给 project-positioning-skill 重定位，本 skill 不自行放宽约束
+  - open: 还没解决，必须进 open_questions，阻塞 finale
+
+hard_rules:
+  - 本 skill 不得自行放宽上游 constraints。要放宽只能 escalated_to_positioning。
+  - blocker 级冲突未处置时，方案不得标 status: reviewed。
+  - prototype 目录内容不受本文件约束。

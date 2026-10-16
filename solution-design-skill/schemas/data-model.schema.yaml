@@ -1,0 +1,112 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://example.local/solution-design/data-model.schema.yaml"
+title: Solution data model
+type: object
+additionalProperties: false
+required:
+  - version
+  - entities
+properties:
+  version:
+    const: 1
+  storage_selection_ref:
+    type: string
+    pattern: "^SEL-[0-9]{3}$"
+  entities:
+    type: array
+    minItems: 1
+    items:
+      $ref: "#/$defs/entity"
+  migration_note:
+    type: string
+$defs:
+  entity:
+    type: object
+    additionalProperties: false
+    required: [name, fields]
+    properties:
+      name:
+        type: string
+        minLength: 1
+      source_refs:
+        type: array
+        items:
+          type: string
+          pattern: "^REQ-[0-9]{3}$"
+      purpose:
+        type: string
+      fields:
+        type: array
+        minItems: 1
+        items:
+          $ref: "#/$defs/field"
+      indexes:
+        type: array
+        items:
+          $ref: "#/$defs/index"
+      relationships:
+        type: array
+        items:
+          $ref: "#/$defs/relationship"
+      note:
+        type: string
+  field:
+    type: object
+    additionalProperties: false
+    required: [name, type]
+    properties:
+      name:
+        type: string
+        minLength: 1
+      type:
+        type: string
+        minLength: 1
+      required:
+        type: boolean
+      unique:
+        type: boolean
+      basis:
+        enum: [requirement, derived, assumption]
+      why_assumed:
+        type: string
+      validation:
+        type: string
+      note:
+        type: string
+    if:
+      properties:
+        basis:
+          const: assumption
+      required: [basis]
+    then:
+      required: [why_assumed]
+  index:
+    type: object
+    additionalProperties: false
+    required: [fields, kind, reason]
+    properties:
+      fields:
+        type: array
+        minItems: 1
+        items:
+          type: string
+      kind:
+        enum: [primary, unique, index, composite]
+      reason:
+        type: string
+        minLength: 1
+  relationship:
+    type: object
+    additionalProperties: false
+    required: [from, to, kind]
+    properties:
+      from:
+        type: string
+        minLength: 1
+      to:
+        type: string
+        minLength: 1
+      kind:
+        enum: [one_to_one, one_to_many, many_to_many]
+      via:
+        type: string

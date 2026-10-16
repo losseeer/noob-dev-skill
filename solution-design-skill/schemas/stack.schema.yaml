@@ -1,0 +1,79 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://example.local/solution-design/stack.schema.yaml"
+title: Technology selection record
+type: object
+additionalProperties: false
+required:
+  - version
+  - as_of
+  - selections
+properties:
+  version:
+    const: 1
+  as_of:
+    type: string
+    format: date
+  selections:
+    type: array
+    minItems: 1
+    items:
+      $ref: "#/$defs/selection"
+$defs:
+  selection:
+    type: object
+    additionalProperties: false
+    required: [id, area, choice, basis, confidence]
+    properties:
+      id:
+        type: string
+        pattern: "^SEL-[0-9]{3}$"
+      area:
+        enum: [language, framework, storage, cache, auth, queue, search, deployment, observability, testing, frontend, styling, state, build]
+      choice:
+        type: string
+        minLength: 1
+      basis:
+        enum: [constraint, requirement, assumption, user_choice]
+      source_ref:
+        type: string
+      decision_ref:
+        type: string
+        pattern: "^ADR-[0-9]{3}$"
+      locked_by_constraint:
+        type: boolean
+      why_assumed:
+        type: string
+      revisit_when:
+        type: string
+      alternatives:
+        type: array
+        items:
+          $ref: "#/$defs/alternative"
+      confidence:
+        enum: [high, medium, low]
+      cost_note:
+        type: string
+      risk_level:
+        enum: [low, medium, high]
+      note:
+        type: string
+    if:
+      properties:
+        basis:
+          const: assumption
+      required: [basis]
+    then:
+      required: [why_assumed, revisit_when]
+  alternative:
+    type: object
+    additionalProperties: false
+    required: [name, rejected_because]
+    properties:
+      name:
+        type: string
+        minLength: 1
+      rejected_because:
+        type: string
+        minLength: 1
+      would_reconsider_when:
+        type: string

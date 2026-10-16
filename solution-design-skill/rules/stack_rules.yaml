@@ -1,0 +1,67 @@
+version: 1
+
+# 选型时的通用约束。每条都必须落到 SEL-xxx 的一条记录里。
+selection_policy:
+  max_candidates: 3
+  must_provide_recommendation: true
+  recommendation_needs_reason: true
+  every_selection_needs_basis: true
+  # basis=assumption 时必须写 why_assumed + revisit_when（schema 强制）
+
+# 每个选型面的推荐默认值。用户项目里已有技术栈时，一律跟随现有栈，不用下面的默认值。
+area_defaults:
+  - area: language
+    recommend_read_first: package.json / pyproject.toml / go.mod / Cargo.toml
+    fallback: Python 3.11+
+    fallback_reason: 依赖最少，标准库能覆盖原型阶段的大多数需求
+  - area: framework
+    recommend_read_first: 同上，读出来的语言决定这一项
+    fallback: FastAPI
+    fallback_reason: 自带 OpenAPI，接口清单能直接验证，省一套 mock
+  - area: storage
+    recommend_read_first: 现有数据库连接串 / ORM 配置
+    fallback: SQLite（单实例）→ PostgreSQL（需要并发写）
+    fallback_reason: 原型阶段零运维；有并发写或数据量过千万再迁 PG
+  - area: cache
+    fallback: 先不引入
+    fallback_reason: 没有实测数据支撑就不要加缓存，缓存是复杂度的主要来源
+  - area: auth
+    fallback: 会话 + HttpOnly Cookie
+    fallback_reason: 无第三方依赖，够了；别一上来就上 OAuth2/OIDC
+  - area: deployment
+    fallback: 单容器 / 单进程
+    fallback_reason: 与 scale 维度对齐，规模没到就不做编排
+  - area: observability
+    fallback: stdout 结构化日志 + 健康检查端点
+    fallback_reason: 第 0 天就能用，比先接入全套 APM 更省事
+  - area: frontend
+    fallback: 服务端渲染模板 或 纯 HTML 单文件
+    fallback_reason: review 一轮最快，零构建
+  - area: testing
+    fallback: 每条 acceptance criterion 至少一个用例
+    fallback_reason: 直接对齐 requirement-analysis 的 AC，不需要额外设计测试策略
+
+# 哪些上游定位维度会锁死选型。读到这些维度时，对应选型必须标 locked_by_constraint: true
+constraint_dimension_bindings:
+  - dimension: criticality
+    binds: [deployment, storage, observability]
+  - dimension: data_sensitivity
+    binds: [storage, auth]
+  - dimension: compliance
+    binds: [storage, auth, observability]
+  - dimension: scale
+    binds: [storage, cache, deployment]
+  - dimension: budget
+    binds: [deployment, observability, storage]
+  - dimension: downtime
+    binds: [deployment, storage]
+  - dimension: data_loss
+    binds: [storage]
+  - dimension: i18n
+    binds: [frontend]
+  - dimension: auth
+    binds: [auth]
+  - dimension: enterprise
+    binds: [deployment, observability, auth]
+  - dimension: form
+    binds: [frontend]

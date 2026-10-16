@@ -1,0 +1,44 @@
+version: 1
+storage_selection_ref: SEL-003
+entities:
+  - name: links
+    source_refs: [REQ-001, REQ-002, REQ-003]
+    purpose: 保存原始 URL 与短码的映射，并累计点击次数
+    fields:
+      - name: id
+        type: INTEGER
+        required: true
+        unique: true
+        basis: derived
+        note: 自增主键，也是 base62 短码的来源
+      - name: code
+        type: TEXT
+        required: true
+        unique: true
+        basis: requirement
+        validation: "^[0-9A-Za-z]{4,12}$"
+        note: 对外暴露的短码，唯一约束支撑 AC-002 的复用行为
+      - name: target_url
+        type: TEXT
+        required: true
+        basis: requirement
+        validation: 必须是 http 或 https 开头的合法 URL
+      - name: click_count
+        type: INTEGER
+        required: true
+        basis: requirement
+        note: 支撑 AC-020，每次成功跳转加一
+      - name: created_at
+        type: TEXT
+        required: true
+        basis: derived
+        validation: ISO 8601
+    indexes:
+      - fields: [code]
+        kind: unique
+        reason: AC-010 的跳转查询走这条索引，同时作为 AC-002 的去重依据
+      - fields: [target_url]
+        kind: unique
+        reason: 同一长 URL 重复提交时先查到此行，直接复用既有 code
+    note: 单表足够，引入用户账号前不做拆分
+migration_note: 首版直接 CREATE TABLE；若迁到 PostgreSQL 需把 id 改为 BIGSERIAL，code/target_url 的 unique 约束保持不变
